@@ -174,7 +174,7 @@ export function criarCasosPainel({ repo, idem, agoraISO, hojeSP, gerarId, regist
             return { id: a.id, pedidoId: p.id, numero: p.numeroSolicitacao ?? null, horaInicio: a.horaInicio || null, duracaoMinutos: a.duracaoMinutos || (p.pacote?.duracaoHoras || 0) * 60, status: a.status,
               servico: a.servico || p.pacote?.tipoServico, modalidade: p.modalidade || null, cliente: { id: c.id, nome: c.nome, telefone: c.telefone },
               local: { logradouro: e.logradouro, numero: e.numero, complemento: e.complemento, bairro: e.bairro, cidade: e.cidade, pontoReferencia: e.pontoReferencia, tipoImovel: e.tipoImovel },
-              profissional: d ? { id: d.id, nome: d.nome, telefone: d.telefone, habilidades: d.habilidades || [] } : null, pagamento,
+              profissional: d ? { id: d.id, nome: d.nome, telefone: d.telefone, habilidades: d.habilidades || [], foto: d.foto || null } : null, pagamento,
               nota: avs.find((v) => v.atendimentoId === a.id)?.notaFinal ?? null, caracteristicas: a.caracteristicas || null, localRefeicao: a.localRefeicao ?? null,
               justificativa: a.justificativa || null, observacao: p.observacaoDisponibilidade || null, historico: a.historico || [] };
           });
@@ -189,7 +189,7 @@ export function criarCasosPainel({ repo, idem, agoraISO, hojeSP, gerarId, regist
       return repo.leitura(TODOS, async (tx) => {
         const ats = await tx.todos('atendimentos'); const dec = Object.fromEntries((await tx.todos('standbyDecisoes')).filter((x) => x.data === d0).map((x) => [x.diaristaId, x.estado]));
         const itens = (await tx.todos('diaristas')).filter((d) => d.status === 'aprovada' && (d.disponibilidade?.dias || []).includes(dow(d0)) && !ats.some((a) => a.diaristaId === d.id && a.data === d0 && a.status !== 'cancelado') && dec[d.id] !== 'liberada')
-          .map((d) => ({ diaristaId: d.id, nome: d.nome, telefone: d.telefone, habilidades: d.habilidades || [], turnos: d.disponibilidade?.turnos || [], regioes: d.disponibilidade?.regioes || [], estado: dec[d.id] || 'standby' }))
+          .map((d) => ({ diaristaId: d.id, nome: d.nome, telefone: d.telefone, foto: d.foto || null, habilidades: d.habilidades || [], turnos: d.disponibilidade?.turnos || [], regioes: d.disponibilidade?.regioes || [], estado: dec[d.id] || 'standby' }))
           .sort((a, b) => Number(a.estado !== 'standby') - Number(b.estado !== 'standby') || a.nome.localeCompare(b.nome));
         return { data: d0, itens };
       });

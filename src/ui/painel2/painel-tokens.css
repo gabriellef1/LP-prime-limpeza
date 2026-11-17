@@ -78,6 +78,7 @@
   --pn-s1:2px; --pn-s2:4px; --pn-s3:6px; --pn-s4:8px; --pn-s5:10px; --pn-s6:12px; --pn-s7:14px; --pn-s8:16px; --pn-s9:18px; --pn-s10:20px; --pn-s12:24px; --pn-s14:28px; --pn-s16:32px;
   --pn-p4:400; --pn-p5:500; --pn-p6:600; --pn-p7:700;
   --pn-fs-10:10px; --pn-fs-11:11px; --pn-fs-14:14px; --pn-fs-15:15px;
+  --pn-fs-0:0px;           /* botão só com ícone no cartão estreito (o rótulo fica no aria-label) */
 
   /* ---------- medidas (px da referência em 1536) */
   --pn-menu-larg:178px;
@@ -90,4 +91,48 @@
   --pn-lin-dia:46px;      /* linha das tabelas de diárias */
   --pn-avatar:36px; --pn-avatar-p:32px;
   --pn-btn-alt:30px; --pn-icone:18px;
+}
+
+/* ---------- Agenda e Escala igual às imagens 01 a 04 da cliente (17/11/2026, pedido da Isa: "layout 100 por cento igual").
+   Medidas por amostra nas imagens (fundo = cor mais comum da área; tinta = média dos pixels mais distantes do fundo).
+   Texto pequeno escurecido até 4,5:1 sobre o fundo dele; ícone cheio (casa, prédio, alfinete) segue a cor medida. */
+:root{
+  --pn-ae-pagina:#fcfcfe;          /* fundo da tela (branco frio) */
+  --pn-ae-titulo:#0b1a78;          /* "Agenda e Escala", botão principal, dia escolhido (medido #001878) */
+  --pn-ae-titulo-hover:#13248f;
+  --pn-ae-azul:#1b2bb8;            /* nomes, horário, links (o azul vivo da imagem) */
+  --pn-ae-azul-2:#3d56c9;          /* "Mensagens e contato", nome do serviço */
+  --pn-ae-endereco:#3b4b93;        /* endereço e imóvel */
+  --pn-ae-cinza:#5d6994;           /* cabeçalho da tabela e apoio */
+  --pn-ae-horas:#15704a;           /* carga horária em verde (medido #40a97f; escurecido pra 4,5:1 até na linha aberta) */
+  --pn-ae-casa:#f59e0b;            /* casa cheia (medido #fda006) */
+  --pn-ae-casa-traco:#c97a06;
+  --pn-ae-predio:#1d5fe0;          /* prédio cheio (medido #0462f7) */
+  --pn-ae-alfinete:#e5322d;        /* alfinete da cidade (medido #fc0609) */
+  --pn-ae-cal:#d9442a;             /* calendário do título e do resumo (medido #b32b04) */
+  --pn-ae-cal-fundo:#fdeee9;
+  --pn-ae-linha:#e7ebf4;           /* separador das linhas */
+  --pn-ae-cab:#edf2f8;             /* faixa do cabeçalho da tabela (medido #eaf0f6) */
+  --pn-ae-dia:#f1f2f8;             /* dia da semana sem escolha (medido #f0f0f6) */
+  --pn-ae-grupo:#fbf3ef;           /* cidade da região metropolitana (medido #f6f0f0) */
+  --pn-ae-grupo-bh:#e8edf8;        /* Belo Horizonte (medido #e4eaf6) */
+  --pn-ae-standby:#fdf1e5;         /* faixa do stand-by (medido #fcf0e4) */
+  --pn-ae-standby-borda:#f6dcc2;
+  --pn-ae-decisao:#fbdcae;         /* selo "Decisão necessária" */
+  --pn-ae-decisao-texto:#8f4a10;
+  --pn-ae-filtro:#fdf0e6;          /* botão Filtros (laranja claro) */
+  --pn-ae-filtro-texto:#b0451c;
+  --pn-ae-filtro-ic:#e0582c;
+  --pn-ae-ok:#e5f6ec;  --pn-ae-ok-texto:#17784a;  --pn-ae-ok-ic:#22a05c;
+  --pn-ae-pend:#fdecec; --pn-ae-pend-texto:#c42b33; --pn-ae-pend-ic:#e8343c;
+  --pn-ae-aten:#fdf2e3; --pn-ae-aten-texto:#a84c16; --pn-ae-aten-ic:#f29a1f;
+  --pn-ae-info:#e5effd; --pn-ae-info-texto:#1f5fc0; --pn-ae-info-ic:#2f7be6;
+  --pn-ae-roxo:#f1edfd; --pn-ae-roxo-texto:#5b3fc4; --pn-ae-roxo-ic:#7b5ce6;
+  --pn-ae-sugerida:#e8eefc; --pn-ae-sol:#f29a1f;
+  --pn-ae-zap:#e3f7ea; --pn-ae-zap-texto:#17784a;
+  --pn-ae-borda-btn:#c5cff0;       /* contorno de Alterar, Enviar e dos três pontinhos */
+  --pn-ae-hover:#f4f6fc;           /* linha sob o mouse */
+  --pn-aba-ativa:inset 3px 0 0 #cd9b63; /* aba escolhida de "Precisa de você" (filete dourado) */
+  --pn-ae-aberta:#eaf0fd;          /* linha com o detalhe aberto */
+  --pn-ae-sombra:0 1px 2px rgba(20,30,80,.06),0 2px 8px rgba(20,30,80,.05);
 }

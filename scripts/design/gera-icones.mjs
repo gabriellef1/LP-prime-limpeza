@@ -36,6 +36,8 @@ const MAPA = {
   // Início do painel (referência da cliente, 10/11/2026)
   brilho: 'sparkles', dolar: 'circle-dollar-sign', grafico: 'chart-line', taxi: 'car-taxi-front', bolsa: 'shopping-bag', celular: 'smartphone',
   usuario: 'user-round', coroa_c: 'crown', calendario_d: 'calendar-days',
+  // Agenda igual às imagens da cliente (17/11/2026): sol da profissional Sugerida
+  sol: 'sun',
 };
 // desenhos próprios no mesmo traço (24 x 24, linha 2): marcas que o Lucide não tem
 const PROPRIOS = {

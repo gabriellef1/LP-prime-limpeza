@@ -102,7 +102,8 @@ t.teste('B3 Início: o que precisa da equipe primeiro (solicitações novas e Pr
   const p = await paginaPrime();
   await p.waitForSelector('[data-bloco=inicio-solicitacoes] tr.p-lin');
   const titulos = await p.locator('section.p-bloco:not([hidden]) h2').allInnerTexts();
-  assert.deepEqual(titulos.filter((x) => ['Solicitações novas', 'Precisa de você', 'Diárias de hoje', 'Diárias de amanhã'].includes(x)), ['Solicitações novas', 'Precisa de você', 'Diárias de hoje', 'Diárias de amanhã']);
+  // ordem da imagem 05 da cliente (17/11/2026): solicitações, diárias de hoje e de amanhã, depois "Precisa de você"
+  assert.deepEqual(titulos.filter((x) => ['Solicitações novas', 'Precisa de você', 'Diárias de hoje', 'Diárias de amanhã'].includes(x)), ['Solicitações novas', 'Diárias de hoje', 'Diárias de amanhã', 'Precisa de você']);
   assert.ok(titulos.includes('Meta de diárias') && titulos.includes('Motivos de cancelamento') && titulos.includes('Regiões mais atendidas'));
   assert.match(await p.locator('h1').innerText(), /^(Bom dia|Boa tarde|Boa noite), Equipe!$/);
   const l = linhas(p).first();
@@ -270,11 +271,13 @@ t.teste('demonstração (seed rico): todos os blocos do Início com dados, urgê
   await p.waitForSelector('[data-bloco=inicio-solicitacoes] tr.p-lin', { timeout: 30000 });
   await p.waitForFunction(() => document.querySelectorAll('section.p-bloco').length >= 9 && document.querySelectorAll('section.p-bloco .esqueleto').length === 0, null, { timeout: 30000 });
   for (const b2 of ['inicio-solicitacoes', 'inicio-pendencias', 'inicio-alertas', 'inicio-cadastros']) assert.ok(await p.locator(`[data-bloco=${b2}] .p-lista li, [data-bloco=${b2}] tr.p-lin`).count() >= 1, b2);
-  for (const b2 of ['inicio-amanha', 'inicio-alertas', 'inicio-cadastros']) assert.equal(await p.locator(`[data-bloco=${b2}] .p-recolher`).getAttribute('aria-expanded'), 'false', `${b2} começa recolhido`);
+  // imagem 05 da cliente (17/11/2026, "layout 100 por cento igual"): no computador todos os blocos começam abertos, lado a
+  // lado (no celular os secundários continuam recolhidos, teste B6); recolher continua valendo e fica guardado
+  for (const b2 of ['inicio-amanha', 'inicio-alertas', 'inicio-cadastros', 'inicio-meta', 'inicio-motivos', 'inicio-regioes']) assert.equal(await p.locator(`[data-bloco=${b2}] .p-recolher`).getAttribute('aria-expanded'), 'true', `${b2} começa aberto`);
   assert.match(await p.locator('[data-bloco=inicio-pendencias] .p-bloco-cab').innerText(), /\d+ urgentes?/);
-  // painel limpo (entrega final): indicadores, alertas e cadastros começam recolhidos, com o resumo no cabeçalho; abre pra conferir
+  // pagamento pendente não trava nada (spec da Agenda, seção 7): no Início é atenção, nunca urgente vermelho
+  assert.equal(await p.locator('[data-bloco=inicio-pendencias] li.urgente[data-tipo=pagamento_vencido]').count(), 0, 'pagamento vencido não é urgente');
   assert.match(await p.locator('[data-bloco=inicio-meta] .p-bloco-cab').innerText(), /\d+ de \d+ \(\d+%\)/);
-  for (const b2 of ['inicio-meta', 'inicio-regioes']) await p.locator(`[data-bloco=${b2}] .p-recolher`).click();
   assert.match(await p.locator('[data-bloco=inicio-meta]').innerText(), /Mês anterior[\s\S]*\d+/);
   assert.match(await p.locator('[data-bloco=inicio-regioes]').innerText(), /Belo Horizonte/);
   assert.match(await p.locator('.p-sistema-btn').innerText(), /\d+ ações automáticas hoje/);
@@ -352,6 +355,8 @@ t.teste('entrega final: "..." abre a solicitação completa sem erro; Alertas re
     await p.keyboard.press('Escape'); await lat.waitFor({ state: 'detached' });
   }
   await p.waitForFunction(() => !document.querySelector('[data-bloco=inicio-alertas] .esqueleto'));
+  // no computador os alertas nascem abertos (imagem 05); recolhido, o cabeçalho mostra o primeiro alerta
+  if (await p.locator('[data-bloco=inicio-alertas] .p-recolher').getAttribute('aria-expanded') === 'true') await p.locator('[data-bloco=inicio-alertas] .p-recolher').click();
   assert.match(await p.locator('[data-bloco=inicio-alertas] .p-bloco-cab').innerText(), /\S+.*(vence|Avaliação|Documento|pacote)/i, 'alerta específico no cabeçalho recolhido');
   assert.deepEqual(erros, []);
   await ctx.close();

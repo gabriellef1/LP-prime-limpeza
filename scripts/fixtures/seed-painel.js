@@ -42,7 +42,8 @@ export function montarSeedPainel(hoje, { agoraISO }) {
 
   const dias = PROF.map(([nome, habilidades, ds], i) => {
     const d = { id: id('d'), nome, cpf: `000000000${i}`.slice(-11), telefone: `3198${String(7000000 + i * 1371).slice(0, 7)}`, email: `prof${i}@exemplo.com`, dataNascimento: '1985-05-10',
-      status: 'aprovada', identidade: 'rg', documentos: [], habilidades, disponibilidade: { dias: ds, turnos: ['integral'], regioes: ['BH - Centro-Sul', 'BH - Oeste'] }, criadoEm: iso(somarDias(hoje, -200)) };
+      status: 'aprovada', identidade: 'rg', documentos: [], habilidades, disponibilidade: { dias: ds, turnos: ['integral'], regioes: ['BH - Centro-Sul', 'BH - Oeste'] }, criadoEm: iso(somarDias(hoje, -200)),
+      foto: `assets/painel/avatar-${(i % 6) + 1}.svg` }; // avatar ilustrado fictício no lugar da foto
     r.diaristas.push(d); return d;
   });
   const clientes = CLI.map(([nome, bairro, cidade], i) => {

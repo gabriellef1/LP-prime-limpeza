@@ -16,7 +16,7 @@ import {
 import { renderizar } from '../../automacoes/v2/variaveis.js';
 import { TEMPLATES } from '../../automacoes/catalogo.js';
 import { icone, ICONE_SERVICO } from './icones.js';
-import { botao, selo, confirmar, pedirMotivo, modal, esqueleto, erroBloco, vazio, ROTULO_HABILIDADE } from './componentes.js';
+import { botao, selo, confirmar, pedirMotivo, modal, esqueleto, erroBloco, vazio, ROTULO_HABILIDADE, fotoUrl } from './componentes.js';
 
 const DIAS = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
 const CURTO = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
@@ -27,7 +27,7 @@ const TOM_STATUS = {
   aguardando_aceite: ['selo-info', 'ampulheta'], confirmada: ['selo-sucesso', 'ok'], em_andamento: ['selo-info', 'ok'], finalizada: ['selo-sucesso', 'ok'],
   cancelada: ['selo-erro', 'erro'], com_ocorrencia: ['selo-atencao', 'aviso'],
 };
-const ORIGEM = { fixa: ['Fixa', 'verificado', 'ae-origem-fixa'], sugerida: ['Sugerida', 'lampada', 'ae-origem-sugerida'], manual: ['Manual', 'pessoa', 'ae-origem-manual'] };
+const ORIGEM = { fixa: ['Fixa', 'verificado', 'ae-origem-fixa'], sugerida: ['Sugerida', 'sol', 'ae-origem-sugerida'], manual: ['Manual', 'pessoa', 'ae-origem-manual'] };
 const COMUNICADA = ['aguardando_envio', 'enviada', 'aguardando_aceite', 'confirmada'];
 
 const dataLonga = (d) => `${DIAS[diaDaSemana(d)]}, ${Number(d.slice(8))} de ${MESES[Number(d.slice(5, 7)) - 1]} de ${d.slice(0, 4)}`;
@@ -48,8 +48,10 @@ const ehAdmin = (s) => !s?.papel || s.papel === 'prime_admin';
 const editavelLinha = (d, hoje) => ['agendado', 'confirmado'].includes(d.status) && d.data >= hoje;
 const irPara = (params) => { history.replaceState(null, '', url('painel/', { tela: 'agenda', ...params })); };
 
-/** Avatar de iniciais (nunca foto real). */
-const avatar = (nome, tam = '') => el('span', { class: `ae-avatar ${tam}`.trim(), 'aria-hidden': 'true', text: iniciais(nome) });
+/** Foto da profissional (imagens da cliente); sem foto cadastrada, as iniciais. Decorativa: o nome vem sempre ao lado. */
+const avatar = (nome, tam = '', foto = null) => (foto
+  ? el('img', { class: `ae-foto ${tam}`.trim(), src: fotoUrl(foto), alt: '', width: tam ? '56' : '36', height: tam ? '56' : '36', loading: 'lazy', decoding: 'async' })
+  : el('span', { class: `ae-avatar ${tam}`.trim(), 'aria-hidden': 'true', text: iniciais(nome) }));
 const estrela = (n) => (n ? el('span', { class: 'ae-nota', 'aria-label': `avaliação ${nota(n)} de 5` }, [nota(n), icone('estrela', { pequeno: true })]) : null);
 function seloStatus(st, { semResposta = false } = {}) {
   const [cls, ic] = TOM_STATUS[st.codigo] || ['', 'ponto'];
@@ -239,7 +241,7 @@ export async function telaAgendaEscala({ sessao, hoje, casca }) {
     hojeBtn.addEventListener('click', () => { est.data = hoje; est.de = null; est.ate = null; est.dados = null; fecharDetalhe(); salvarUrl(); renderCab(); carregar({ preparar: true }); });
     const canal = est.dados?.config?.canalAtivo || 'whatsapp';
     const indicador = el('span', { class: `ae-canal ${canal === 'portal' ? 'ae-canal-portal' : ''}`.trim(), dataset: { canal }, title: 'A troca de canal é feita pela administração em Gestão > Configurações' }, [
-      icone(canal === 'portal' ? 'local' : 'zap'), el('span', {}, [el('b', { text: canal === 'portal' ? 'Portal ativo' : 'WhatsApp ativo' }), el('small', { text: canal === 'portal' ? 'Contingência' : 'Canal principal' })]),
+      icone(canal === 'portal' ? 'local' : 'whatsapp'), el('span', {}, [el('b', { text: canal === 'portal' ? 'Portal ativo' : 'WhatsApp ativo' }), el('small', { text: canal === 'portal' ? 'Contingência' : 'Canal principal' })]),
     ]);
     trocar(cab,
       el('div', { class: 'ae-titulo' }, [el('span', { class: 'ae-titulo-ic', 'aria-hidden': 'true' }, [icone('agenda')]), el('div', {}, [el('h1', { text: 'Agenda e Escala' }), el('p', { text: 'Organize, revise e envie as diárias para as profissionais.' })])]),
@@ -376,7 +378,7 @@ export async function telaAgendaEscala({ sessao, hoje, casca }) {
     ]) }));
     return el('div', { class: 'ae-sb-linha', dataset: { diarista: s.diaristaId } }, [
       el('b', { class: 'ae-hora', text: s.horaInicio }),
-      el('span', { class: 'ae-pessoa' }, [avatar(s.nome), el('span', {}, [el('span', { class: 'ae-nome-linha' }, [el('b', { class: 'ae-nome', text: s.nome }), estrela(s.nota)]),
+      el('span', { class: 'ae-pessoa' }, [avatar(s.nome, '', s.foto), el('span', {}, [el('span', { class: 'ae-nome-linha' }, [el('b', { class: 'ae-nome', text: s.nome }), estrela(s.nota)]),
         el('span', { class: `ae-origem ${s.estado === 'confirmada' ? 'ae-origem-fixa' : 'ae-origem-manual'}`, text: s.estado === 'confirmada' ? 'Disponível' : 'Aguardando confirmação' })])]),
       el('span', { class: 'ae-sb-info' }, [el('small', { text: 'Região de atuação' }), el('span', { text: s.regiao || '-' })]),
       el('span', { class: 'ae-sb-info' }, [el('small', { text: 'Disponibilidade' }), el('span', { text: horas(s.duracaoMinutos) })]),
@@ -445,16 +447,17 @@ export async function telaAgendaEscala({ sessao, hoje, casca }) {
     const balao = el('button', { type: 'button', class: 'ae-balao', 'aria-haspopup': 'menu', 'aria-expanded': 'false', 'aria-label': `Mensagens e contato de ${d.cliente.nome}` }, [icone('conversa', { pequeno: true }), el('span', { text: 'Mensagens e contato' })]);
     balao.addEventListener('click', (ev) => { ev.stopPropagation(); menuCliente(balao, d); });
     const cliente = el('span', { class: 'ae-cliente' }, [
-      el('span', { class: 'ae-nome-linha' }, [el('b', { class: 'ae-nome', text: d.cliente.nome }),
+      el('span', { class: 'ae-nome-linha' }, [el('b', { class: 'ae-nome', text: d.cliente.nome, title: d.cliente.nome }),
         d.cliente.parceria ? el('span', { class: 'ae-coroa', role: 'img', 'aria-label': 'Cliente parceira', title: 'Cliente parceira' }, [icone('coroa', { pequeno: true })]) : null,
         d.pacote ? el('span', { class: 'ae-pacote', role: 'img', 'aria-label': 'Diária de pacote', title: 'Diária de pacote contratado' }, [icone('pacote', { pequeno: true }), el('b', { 'aria-hidden': 'true', text: 'P' })]) : null]),
       balao,
     ]);
     const animais = [d.imovel.caes ? el('span', { role: 'img', 'aria-label': 'Tem cachorro', title: 'Tem cachorro' }, [icone('cachorro', { pequeno: true })]) : null,
       d.imovel.gatos ? el('span', { role: 'img', 'aria-label': 'Tem gato', title: 'Tem gato' }, [icone('gato', { pequeno: true })]) : null].filter(Boolean);
+    const enderecoCompleto = [rua(d.local), `${d.local.bairro} - ${cidadeUf(d.local)}`, imovel(d.imovel)].filter(Boolean).join(' · ');
     const end = periodo
-      ? el('span', { class: 'ae-end' }, [el('span', { text: [[d.local.logradouro, d.local.numero].filter(Boolean).join(', '), d.local.bairro].filter(Boolean).join(' - ') }), el('span', { class: 'ae-linha2', text: [cidadeUf(d.local), imovel(d.imovel)].filter(Boolean).join(' · ') }), animais.length ? el('span', { class: 'ae-animais' }, animais) : null])
-      : el('span', { class: 'ae-end' }, [el('span', { text: rua(d.local) }), el('span', { class: 'ae-linha2', text: `${d.local.bairro} - ${cidadeUf(d.local)}` }), el('span', { class: 'ae-linha2', text: imovel(d.imovel) }), animais.length ? el('span', { class: 'ae-animais' }, animais) : null]);
+      ? el('span', { class: 'ae-end', title: enderecoCompleto }, [el('span', { text: [[d.local.logradouro, d.local.numero].filter(Boolean).join(', '), d.local.bairro].filter(Boolean).join(' - ') }), el('span', { class: 'ae-linha2', text: [cidadeUf(d.local), imovel(d.imovel)].filter(Boolean).join(' · ') }), animais.length ? el('span', { class: 'ae-animais' }, animais) : null])
+      : el('span', { class: 'ae-end', title: enderecoCompleto }, [el('span', { text: rua(d.local) }), el('span', { class: 'ae-linha2', text: `${d.local.bairro} - ${cidadeUf(d.local)}` }), el('span', { class: 'ae-linha2', text: imovel(d.imovel) }), animais.length ? el('span', { class: 'ae-animais' }, animais) : null]);
     const servico = el('span', { class: 'ae-servico' }, [el('span', { class: `ae-serv-ic ${d.servico === 'empresarial' || d.servico === 'condominial' ? 'ae-serv-predio' : 'ae-serv-casa'}` }, [icone(ICONE_SERVICO[d.servico] || 'casa', { titulo: SERVICO[d.servico] || d.servico })]),
       el('span', {}, [el('span', { class: 'ae-serv-nome', text: SERVICO[d.servico] || d.servico }), el('span', { class: 'ae-linha2', text: horas(d.duracaoMinutos) })])]);
     const acao = acaoDaLinha({ ...d, diaristaId: d.profissional?.id }) && d.data >= hoje ? acaoDaLinha({ ...d, diaristaId: d.profissional?.id }) : null;
@@ -491,7 +494,7 @@ export async function telaAgendaEscala({ sessao, hoje, casca }) {
     alterar?.addEventListener('click', (ev) => { ev.stopPropagation(); abrirSeletor(alterar, d); });
     const remover = pode ? el('button', { type: 'button', class: 'ae-icone-btn ae-remover', 'aria-label': `Remover ${p.nome} desta diária` }, [icone('fechar', { pequeno: true })]) : null;
     remover?.addEventListener('click', (ev) => { ev.stopPropagation(); removerProfissional(remover, d); });
-    return el('span', { class: 'ae-prof' }, [avatar(p.nome), el('span', { class: 'ae-prof-txt' }, [
+    return el('span', { class: 'ae-prof' }, [avatar(p.nome, '', p.foto), el('span', { class: 'ae-prof-txt' }, [
       el('span', { class: 'ae-nome-linha' }, [el('b', { class: 'ae-nome', text: periodo && !pode ? p.nome : p.nome.split(' ').slice(0, 2).join(' ') }), estrela(p.nota)]),
       !periodo || pode ? seloOrigem(d.designacaoOrigem) : null,
       d.alertaFixa ? el('span', { class: 'ae-alerta-fixa', title: d.alertaFixa }, [icone('alerta', { pequeno: true }), 'Conflito da fixa']) : null,
@@ -577,7 +580,7 @@ export async function telaAgendaEscala({ sessao, hoje, casca }) {
     const atual = d.profissional;
     const porque = el('div', { class: 'ae-porque' });
     const caixa = abrirPopover(ancora, { titulo: atual ? 'Alterar ou selecionar profissional' : 'Selecionar profissional', ic: 'equipe', largura: 'largo', conteudo: el('div', { class: 'ae-pop-corpo' }, [
-      atual ? el('div', { class: 'ae-sel-atual' }, [avatar(atual.nome, 'ae-avatar-g'), el('span', {}, [el('span', { class: 'ae-nome-linha' }, [el('b', { class: 'ae-nome', text: atual.nome }), estrela(atual.nota), seloOrigem(d.designacaoOrigem)]),
+      atual ? el('div', { class: 'ae-sel-atual' }, [avatar(atual.nome, 'ae-avatar-g', atual.foto), el('span', {}, [el('span', { class: 'ae-nome-linha' }, [el('b', { class: 'ae-nome', text: atual.nome }), estrela(atual.nota), seloOrigem(d.designacaoOrigem)]),
         el('span', { class: 'ae-linha2', text: 'Você pode alterar a profissional desta diária.' })])]) : el('p', { class: 'p-sec', text: `${d.cliente.nome} · ${ddmm(d.data)} às ${d.horaInicio} · ${SERVICO[d.servico] || d.servico}` }),
       porque,
       el('label', { class: 'ae-busca' }, [icone('busca'), el('span', { class: 'p-sr', text: 'Buscar profissional por nome' }), busca]), chipsEl, lista,
@@ -597,7 +600,7 @@ export async function telaAgendaEscala({ sessao, hoje, casca }) {
       trocar(lista, vis.length ? el('ul', {}, vis.map((p) => {
         const sel = p.atribuida ? el('span', { class: 'ae-ja', text: 'Já atribuída' }) : botao('Selecionar', { aoClicar: () => escolher(p) });
         if (!p.atribuida) sel.setAttribute('aria-label', `Selecionar ${p.nome}`);
-        return el('li', { dataset: { candidata: p.id } }, [avatar(p.nome), el('span', { class: 'ae-sel-info' }, [
+        return el('li', { dataset: { candidata: p.id } }, [avatar(p.nome, '', p.foto), el('span', { class: 'ae-sel-info' }, [
           el('span', { class: 'ae-nome-linha' }, [el('b', { class: 'ae-nome', text: p.nome }), estrela(p.nota), p.impedida ? el('span', { class: 'ae-indisp', text: p.motivos.join(', ') }) : el('span', { class: 'ae-disp' }, [icone('ok', { pequeno: true }), 'Disponível'])]),
           el('span', { class: 'ae-hab' }, [icone('casa', { pequeno: true }), p.habilidades.map((h) => ROTULO_HABILIDADE[h] || h).join(' e ') || 'Sem habilidade marcada']),
         ]), el('span', { class: 'ae-atende', text: p.regioes.length ? `Atende: ${p.regioes.join(', ')}` : '' }), sel]);
@@ -770,7 +773,7 @@ export async function telaAgendaEscala({ sessao, hoje, casca }) {
         sec('documento', 'Serviço e observações', [el('p', {}, ['Serviço: ', el('b', { text: SERVICO[d.servico] || d.servico })]), el('p', { text: `Carga horária: ${horas(d.duracaoMinutos)}` }),
           d.prioridades?.length ? el('div', {}, [el('p', { text: 'Prioridades informadas pelo cliente:' }), el('ul', {}, d.prioridades.map((x) => el('li', { text: x })))]) : null,
           el('p', { class: 'ae-linha2', text: d.observacao || 'Sem observações.' })]),
-        sec('pessoa', 'Profissional designada', [d.profissional ? el('div', { class: 'ae-det-linha' }, [el('span', { class: 'ae-prof' }, [avatar(d.profissional.nome, 'ae-avatar-g'), el('span', {}, [el('span', { class: 'ae-nome-linha' }, [el('b', { class: 'ae-nome ae-nome-g', text: d.profissional.nome }), estrela(d.profissional.nota)]), seloOrigem(d.designacaoOrigem)])]), aviao, alterar])
+        sec('pessoa', 'Profissional designada', [d.profissional ? el('div', { class: 'ae-det-linha' }, [el('span', { class: 'ae-prof' }, [avatar(d.profissional.nome, 'ae-avatar-g', d.profissional.foto), el('span', {}, [el('span', { class: 'ae-nome-linha' }, [el('b', { class: 'ae-nome ae-nome-g', text: d.profissional.nome }), estrela(d.profissional.nota)]), seloOrigem(d.designacaoOrigem)])]), aviao, alterar])
           : el('div', { class: 'ae-det-linha' }, [el('span', {}, [el('b', { text: 'Sem profissional' }), el('p', { class: 'ae-obrig', text: d.escalaRecusa ? `${d.escalaRecusa.nome} recusou${d.escalaRecusa.motivo ? `: ${d.escalaRecusa.motivo}` : ''}` : 'Obrigatório' })]), alterar]),
         d.profissional && pode ? (() => { const x = el('button', { type: 'button', class: 'ae-link', text: `Remover ${primeiro(d.profissional.nome)} desta diária` }); x.addEventListener('click', () => removerProfissional(x, d)); return x; })() : null,
         d.alertaFixa ? el('p', { class: 'ae-alerta-fixa', text: `${d.alertaFixa}. O sistema não troca a fixa sozinho.` }) : null, fixaLinha]),
