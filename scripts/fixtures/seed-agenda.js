@@ -1,5 +1,6 @@
 // Seed de DEMONSTRAÇÃO da Agenda e Escala (SEED_DEMO=agenda). Tudo inventado; os nomes seguem as imagens de referência
-// da cliente (Prime_Limpeza/agenda-escala), sem foto (avatar de iniciais). Datas relativas a hoje: o dia de hoje fica
+// da cliente (Prime_Limpeza/agenda-escala), com os avatares ilustrados fictícios de assets/painel no lugar da foto (nenhuma
+// foto de pessoa real; o Carlos fica sem, pra mostrar as iniciais). Datas relativas a hoje: o dia de hoje fica
 // igual à imagem principal (11 diárias em Contagem, Betim e Belo Horizonte, stand-by, fixas, sugeridas, sem
 // profissional) e a semana tem diárias passadas (finalizadas, cancelada, com ocorrência) e futuras (enviada sem
 // resposta, aguardando aceite, confirmada, recusada). Prazo de "sem resposta" configurado em 2 horas só na demonstração.
@@ -62,7 +63,8 @@ export function montarSeedAgenda(hoje, { agoraISO }) {
   let numero = 10300;
   const dias = PROF.map(([nome, nota, habilidades, regioes], i) => {
     const d = { id: id('d'), nome, cpf: `100000000${i}`.slice(-11), telefone: `3198${String(8100000 + i * 1373).slice(0, 7)}`, email: `agenda.prof${i}@exemplo.com`, dataNascimento: '1986-03-12',
-      status: 'aprovada', identidade: 'rg', documentos: [], habilidades, disponibilidade: { dias: [1, 2, 3, 4, 5, 6], turnos: ['integral'], regioes }, criadoEm: iso(somarDias(hoje, -300)), notaDemo: nota };
+      status: 'aprovada', identidade: 'rg', documentos: [], habilidades, disponibilidade: { dias: [1, 2, 3, 4, 5, 6], turnos: ['integral'], regioes }, criadoEm: iso(somarDias(hoje, -300)), notaDemo: nota,
+      foto: nome.startsWith('Carlos') ? null : `assets/painel/avatar-${(i % 6) + 1}.svg` };
     r.diaristas.push(d); return d;
   });
   const clientes = CLI.map(([nome, tipo, parceria, logradouro, numeroEnd, complemento, bairro, cidade, metragem, comodos, caes, gatos], i) => {

@@ -2,6 +2,7 @@
 // textContent/atributos (el). Teclado: Esc fecha modal e painel lateral, foco preso enquanto aberto e devolvido ao fechar;
 // expansões com aria-expanded/aria-controls; contadores com rótulo pro leitor de tela.
 import { el, trocar, hrefSeguro } from '../dom.js';
+import { url } from '../../config/app.js';
 import { executarAcao, mensagemErro } from '../acoes.js';
 import { icone } from './icones.js';
 import { selo, TIPO_SELO } from '../comum.js';
@@ -52,11 +53,16 @@ const HABILIDADES = {
 };
 export const ROTULO_HABILIDADE = Object.fromEntries(Object.entries(HABILIDADES).map(([k, [, r]]) => [k, r]));
 
-/** Avatar de iniciais + nome + ícones de habilidade (cada ícone com rótulo; title pra quem usa mouse). */
-export function avatar(nome, { habilidades = [], linha2 } = {}) {
+/** Foto da profissional (imagens da cliente, 17/11/2026); sem foto, as iniciais. Decorativa: o nome vem sempre ao lado. */
+export const fotoUrl = (f) => (!f ? null : /^(https?:|data:image\/|blob:)/.test(f) ? f : url(f));
+export const rosto = (nome, foto) => (foto ? el('img', { class: 'p-avatar-foto', src: fotoUrl(foto), alt: '', width: '36', height: '36', loading: 'lazy', decoding: 'async' })
+  : el('span', { class: 'p-avatar-circulo', 'aria-hidden': 'true', text: iniciais(nome) }));
+
+/** Avatar (foto ou iniciais) + nome + ícones de habilidade (cada ícone com rótulo; title pra quem usa mouse). */
+export function avatar(nome, { habilidades = [], linha2, foto } = {}) {
   const hab = habilidades.filter((h) => HABILIDADES[h]);
   return el('span', { class: 'p-avatar' }, [
-    el('span', { class: 'p-avatar-circulo', 'aria-hidden': 'true', text: iniciais(nome) }),
+    rosto(nome, foto),
     el('span', { class: 'p-avatar-nome' }, [
       el('b', { text: nome || 'Sem profissional' }),
       linha2 ? el('span', { class: 'p-sec', text: linha2 }) : null,
@@ -73,7 +79,7 @@ export function zap(telefone, nome) {
   const d = String(telefone || '').replace(/\D/g, '');
   if (d.length < 10) return null;
   const href = hrefSeguro(`https://wa.me/55${d.replace(/^55/, '')}`);
-  return href ? el('a', { class: 'p-zap', href, target: '_blank', rel: 'noopener', 'aria-label': `WhatsApp de ${nome || 'contato'}`, title: 'Abrir WhatsApp' }, [icone('zap')]) : null;
+  return href ? el('a', { class: 'p-zap', href, target: '_blank', rel: 'noopener', 'aria-label': `WhatsApp de ${nome || 'contato'}`, title: 'Abrir WhatsApp' }, [icone('whatsapp')]) : null;
 }
 
 export function esqueleto(linhas = 3) {
@@ -92,7 +98,7 @@ export const vazio = (texto) => el('p', { class: 'p-vazio', text: texto });
  * { conteudo, contagem?, urgentes?, sub?, extra?, rodape?, vazio? }. Com `vazio: true` e `someSeVazio`, o bloco some.
  * A urgência continua visível no cabeçalho com o bloco recolhido.
  */
-export function bloco({ id, titulo, carregar, someSeVazio = false, recolhivel = true, classe = '', rotuloContagem = (n) => `${n}`, recolhidoNoCelular = false, recolhido = false, sub: subInicial = '', extra: extraInicial = [] }) {
+export function bloco({ id, titulo, ic, carregar, someSeVazio = false, recolhivel = true, classe = '', rotuloContagem = (n) => `${n}`, recolhidoNoCelular = false, recolhido = false, sub: subInicial = '', extra: extraInicial = [] }) {
   const corpoId = novoId('bloco');
   const tituloId = novoId('titulo');
   const raiz = el('section', { class: `p-bloco ${classe}`.trim(), 'aria-labelledby': tituloId, dataset: { bloco: id } });
@@ -114,7 +120,7 @@ export function bloco({ id, titulo, carregar, someSeVazio = false, recolhivel = 
     corpo.hidden = !abrir; rodapeEl.hidden = !abrir || !rodapeEl.childNodes.length;
     guardado.gravar(`recolhido.${id}`, abrir ? '0' : '1');
   });
-  trocar(raiz, el('div', { class: 'p-bloco-cab' }, [el('div', { class: 'p-titulo' }, [el('div', {}, [el('div', { class: 'p-titulo-linha' }, [h2, contagemEl]), subEl])]), el('div', { class: 'p-extra' }, [extraEl, seta])]), corpo, rodapeEl);
+  trocar(raiz, el('div', { class: 'p-bloco-cab' }, [el('div', { class: 'p-titulo' }, [ic ? el('span', { class: 'p-bloco-ic', 'aria-hidden': 'true' }, [icone(ic)]) : null, el('div', {}, [el('div', { class: 'p-titulo-linha' }, [h2, contagemEl]), subEl])]), el('div', { class: 'p-extra' }, [extraEl, seta])]), corpo, rodapeEl);
   async function recarregar() {
     if (!corpo.querySelector('.esqueleto')) corpo.setAttribute('aria-busy', 'true');
     try {

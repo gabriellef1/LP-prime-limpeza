@@ -1,0 +1,336 @@
+/* Casca e Início do painel iguais às imagens da cliente (pedido da Isa, 16/11/2026: "deixar o layout 100 por cento igual
+   àquele que eu te mandei, porque a gente sentiu falta das cores"). A tela é a mesma (mesmos blocos, ações e testes);
+   aqui só muda a pele, com os tokens medidos em painel-tokens.css e o mesmo desenho da vista inicio-vista.css.
+   Imagem de referência do Início: dashboard-isa.png (docs/painel-referencia.md); da Agenda: agenda-escala.css. */
+
+/* ---------- casca: menu azul-noite com o logo branco, item ativo dourado e a folhagem embaixo */
+body.p-app{background:var(--pn-fundo);font-family:var(--pn-sans)}
+.p-casca:not(.p-casca-compacta){grid-template-columns:var(--pn-menu-larg) minmax(0,1fr)}
+.p-menu-col{background:var(--pn-menu);border-right:0}
+.p-menu{padding:var(--pn-s8) var(--pn-s6) var(--pn-s6)}
+.p-marca{justify-content:center;padding:0 0 var(--pn-s12)}
+.p-marca img{width:112px;height:auto}
+.p-menu-lista{gap:var(--pn-s3)}
+.p-menu-item{min-height:40px;color:var(--pn-menu-texto);font-family:var(--pn-sans);font-weight:var(--pn-p5)}
+.p-menu-item:hover{background:var(--pn-menu-hover);color:var(--pn-menu-texto)}
+.p-menu-item[aria-current="page"]{background:var(--pn-ouro-degrade);color:var(--pn-titulo);box-shadow:var(--pn-sombra-leve)}
+.p-menu-item[aria-current="page"] svg{color:var(--pn-ouro-texto)}
+.p-submenu .p-menu-item{color:var(--pn-menu-texto-2)}
+.p-menu-rodape{margin-top:0;border-top-color:var(--marinho-600)}
+.p-menu-rodape .trocar-area,.p-menu-rodape a{color:var(--pn-menu-texto)}
+.p-frase{margin:0 0 var(--pn-s8);text-align:center;font-family:var(--pn-serif);font-style:italic;font-weight:var(--pn-p4);font-size:var(--pn-fs-15);line-height:1.5;color:var(--pn-menu-texto)}
+.p-casca-recolhida .p-frase{display:none}
+.p-folhagem{flex:1 1 auto;min-height:120px;background:url(../../../assets/painel/folhagem.svg) no-repeat left bottom / 100% auto;opacity:.9}
+.p-casca-recolhida .p-folhagem{min-height:160px;background-size:180% auto;background-position:right bottom}
+.p-casca-recolhida .p-marca img{width:56px}
+.p-casca-recolhida .p-marca{padding-bottom:var(--pn-s8)}
+.p-topo{background:var(--pn-fundo);border-bottom:0;font-family:var(--pn-sans)}
+.p-busca-campo{border-color:var(--pn-borda);border-radius:var(--pn-raio-pilula);background:var(--pn-branco);box-shadow:var(--pn-sombra-leve)}
+.p-icone-btn{color:var(--pn-icone)}
+.p-usuario strong{color:var(--pn-titulo)}
+.p-usuario small{color:var(--pn-texto-2)}
+.p-avatar-circulo{background:var(--pn-ouro-1);color:var(--pn-titulo)}
+.p-zap{color:var(--pn-zap)}
+
+/* ---------- Início: fundo creme, cartões de canto redondo com sombra quente, títulos em serifa */
+.p-conteudo.p-ini{max-width:none;padding:var(--pn-s4) var(--pn-margem-dir) var(--pn-s16) var(--pn-margem-esq);gap:var(--pn-gap);font-family:var(--pn-sans);color:var(--pn-texto)}
+.p-principal:has(.p-ini) .p-data{display:none}
+.p-ini-cab{align-items:center;padding-bottom:0}
+.p-ini-saudacao h1{display:flex;align-items:center;gap:var(--pn-s4);margin:0;font-family:var(--pn-serif);font-weight:var(--pn-p7);font-size:var(--pn-fs-saudacao);line-height:1.15;color:var(--pn-titulo)}
+.p-ini-coroa{display:inline-flex;color:var(--pn-ouro-detalhe)}
+.p-ini-coroa svg{width:30px;height:30px}
+.p-ini-saudacao p{display:flex;align-items:center;gap:var(--pn-s3);margin:var(--pn-s2) 0 0;font-size:var(--pn-fs-sub);color:var(--pn-texto)}
+.p-ini-brilho{display:inline-flex;color:var(--pn-ouro-detalhe)}
+.p-ini-cab-dir{display:flex;align-items:stretch;gap:var(--pn-gap);flex-wrap:wrap}
+.p-ini .p-sistema-btn{min-height:52px;padding:var(--pn-s4) var(--pn-s8);border:1px solid var(--pn-borda);border-radius:var(--pn-raio);background:var(--pn-branco);box-shadow:var(--pn-sombra-cartao);color:var(--pn-titulo)}
+.p-ini .p-sistema-btn strong{color:var(--pn-titulo);font-weight:var(--pn-p6)}
+.p-ini .p-sistema-btn .p-ponto{background:var(--pn-ok-texto)}
+.p-ini-data{display:flex;align-items:center;gap:var(--pn-s6);margin:0;padding:var(--pn-s4) var(--pn-s10) var(--pn-s4) var(--pn-s8);border:1px solid var(--pn-borda);border-radius:var(--pn-raio);background:var(--pn-branco);box-shadow:var(--pn-sombra-cartao);font-size:var(--pn-fs-texto);line-height:1.35;color:var(--pn-titulo)}
+.p-ini-data-ic{display:inline-flex;color:var(--pn-ouro-2)}
+.p-ini-data-ic svg{width:24px;height:24px}
+
+.p-ini .p-bloco{background:var(--pn-cartao-degrade);border:1px solid var(--pn-borda);border-radius:var(--pn-raio);box-shadow:var(--pn-sombra-cartao)}
+.p-ini .p-bloco.p-urgente-borda{box-shadow:var(--pn-sombra-cartao)}
+.p-ini .p-bloco-cab{align-items:center;gap:var(--pn-s6);min-height:0;padding:var(--pn-s6) var(--pn-s6) var(--pn-s4)}
+.p-bloco-ic{display:inline-flex;align-items:center;justify-content:center;flex:none;width:36px;height:36px;border-radius:var(--pn-raio-pilula);background:var(--pn-erro-fundo);color:var(--pn-erro-texto)}
+.p-ini [data-bloco=inicio-hoje] .p-bloco-ic,.p-ini [data-bloco=inicio-amanha] .p-bloco-ic,.p-ini [data-bloco=inicio-meta] .p-bloco-ic,.p-ini [data-bloco=inicio-regioes] .p-bloco-ic{background:var(--pn-negociar-fundo);color:var(--pn-ouro-3)}
+.p-ini [data-bloco=inicio-standby] .p-bloco-ic,.p-ini [data-bloco=inicio-cadastros] .p-bloco-ic{background:var(--pn-info-halo);color:var(--pn-info-texto)}
+.p-ini .p-bloco-cab .p-titulo{gap:var(--pn-s6)}
+.p-ini .p-bloco-cab h2{margin:0;font-family:var(--pn-serif);font-weight:var(--pn-p7);font-size:var(--pn-fs-bloco-2);line-height:1.25;color:var(--pn-titulo)}
+.p-ini .p-ini-l3 .p-bloco-cab h2{font-size:var(--pn-fs-bloco-3)}
+.p-ini .p-ini-l4 .p-bloco-cab h2{font-size:var(--pn-fs-bloco)}
+/* cabeçalhos: o título não quebra no meio; o que sobra (contagens, atalho) desce pra linha de baixo */
+.p-ini .p-bloco-cab h2{white-space:nowrap}
+.p-ini .p-ini-l2 .p-bloco-cab{flex-wrap:wrap}
+.p-ini .p-ini-l2 .p-bloco-cab .p-extra{margin-left:auto}
+.p-ini .p-ini-l3 .p-bloco-cab .p-titulo-linha,.p-ini .p-ini-l4 .p-bloco-cab .p-titulo-linha{flex-wrap:wrap;row-gap:var(--pn-s1)}
+.p-ini .p-ini-l4 .p-bloco-cab h2{font-size:var(--pn-fs-bloco-4);white-space:normal}
+.p-ini .p-bloco-rodape{margin-top:auto}
+@media (min-width:1280px){
+  .p-ini [data-bloco=inicio-pendencias] .p-lista{max-height:316px;overflow-y:auto;scrollbar-gutter:stable;padding-right:var(--pn-s2)}
+  .p-ini [data-bloco=inicio-pendencias] .p-lista.p-lista-cheia{max-height:none;overflow:visible}
+  .p-ini .p-pend{grid-template-columns:96px minmax(0,1fr)}
+  .p-ini .p-standby .p-acoes-item{margin-left:0}
+}
+@media (max-width:1279px){.p-ini [data-bloco=inicio-pendencias] .p-bloco-rodape{display:none}}
+.p-ini .p-cont-bloco{display:inline-flex;align-items:center;gap:var(--pn-s4)}
+.p-ini .p-cont-bloco .p-sec{font-family:var(--pn-serif);font-weight:var(--pn-p7);font-size:var(--pn-fs-bloco);color:var(--pn-titulo)}
+.p-ini .p-cont-bloco .selo{border-color:transparent;border-radius:var(--pn-raio-pilula);background:var(--pn-urgente-fundo);color:var(--pn-ae-pend-texto);font-weight:var(--pn-p5)}
+.p-ini .p-bloco-cab .p-sub{font-size:var(--pn-fs-menor);color:var(--pn-texto-2)}
+.p-ini .p-extra .p-btn{min-height:30px;padding:0 var(--pn-s8);border:1px solid var(--pn-borda);border-radius:var(--pn-raio-pilula);background:var(--pn-branco);color:var(--pn-titulo);font-size:var(--pn-fs-menor);font-weight:var(--pn-p5);text-decoration:none}
+.p-ini [data-bloco=inicio-solicitacoes] .p-extra .p-btn{color:var(--pn-ae-pend-texto)}
+.p-ini .p-extra .p-link{font-size:var(--pn-fs-menor);color:var(--pn-titulo)}
+.p-ini .p-recolher{border:1px solid var(--pn-borda);border-radius:var(--pn-raio-pilula);background:var(--pn-branco);color:var(--pn-titulo)}
+.p-ini .p-bloco-corpo{padding:0 var(--pn-s6) var(--pn-s6)}
+.p-ini .p-bloco-rodape{padding:0 var(--pn-s6) var(--pn-s6)}
+.p-ini .p-bloco-rodape .p-link{font-size:var(--pn-fs-menor);font-weight:var(--pn-p5);color:var(--pn-titulo)}
+.p-ini .p-pontos{gap:var(--pn-s6);font-size:var(--pn-fs-menor);color:var(--pn-texto)}
+.p-ini .p-pontos span::before{background:var(--pn-ok-texto)}
+.p-ini .p-pontos span.aguardando::before{background:var(--pn-amarelo)}
+
+/* tabelas: faixa de cabeçalho clara, texto condensado de 13 px, linhas de 46 a 48 px */
+.p-ini .p-tabela{font-size:var(--pn-fs-texto)}
+.p-ini .p-tabela th{padding:var(--pn-s3) var(--pn-s4);background:var(--pn-cab-tabela);border-bottom:0;font-size:var(--pn-fs-cab);font-weight:var(--pn-p4);color:var(--pn-texto-2)}
+.p-ini .p-tabela th:first-child{border-radius:var(--pn-raio-btn) 0 0 var(--pn-raio-btn)}
+.p-ini .p-tabela th:last-child{border-radius:0 var(--pn-raio-btn) var(--pn-raio-btn) 0}
+.p-ini .p-tabela td{padding:var(--pn-s3) var(--pn-s4);border-bottom:1px solid var(--pn-linha);font-size:var(--pn-fs-texto);color:var(--pn-texto)}
+.p-ini .p-tabela tr.p-lin td{padding-top:var(--pn-s4);padding-bottom:var(--pn-s4)}
+.p-ini .p-tabela tr.p-lin:hover td{background:var(--pn-cartao-topo)}
+.p-ini .p-tabela .p-forte{font-weight:var(--pn-p5);color:var(--pn-texto)}
+.p-ini .p-tabela .p-linha2{color:var(--pn-texto-2)}
+.p-ini .p-tabela .p-expandir{color:var(--pn-texto)}
+.p-ini .p-local{display:inline-flex;align-items:center;gap:var(--pn-s1)}
+.p-ini .p-local svg{color:var(--pn-local)}
+.p-ini .p-cel-ic{width:28px}
+.p-ini .p-serv-ic{display:inline-flex;color:var(--pn-casa)}
+.p-ini .p-serv-empresarial,.p-ini .p-serv-condominial{color:var(--pn-predio)}
+.p-ini .p-serv-passadoria{color:var(--pn-ferro)}
+.p-ini .p-serv-pre_pos_evento{color:var(--pn-festa)}
+.p-ini .p-avatar-foto,.p-avatar-foto{flex:none;width:32px;height:32px;border-radius:var(--pn-raio-pilula);object-fit:cover;box-shadow:var(--pn-anel-avatar)}
+.p-ini .p-avatar-nome b{font-weight:var(--pn-p5);color:var(--pn-texto)}
+.p-ini .p-habilidades{color:var(--pn-ouro-2);margin-top:0}
+.p-ini .p-habilidades span + span{color:var(--pn-amarelo)}
+.p-ini .p-zap{width:28px;height:28px}
+.p-ini .p-zap svg{color:var(--pn-zap)}
+
+/* selos de pagamento (duas linhas: Pago / PIX) e de status */
+.p-pag{display:inline-flex;flex-direction:column;align-items:center;min-width:56px;padding:var(--pn-s1) var(--pn-s4);border-radius:var(--pn-raio-chip);font-size:var(--pn-fs-menor);line-height:1.25;text-align:center}
+.p-pag-ok{background:var(--pn-ok-fundo);color:var(--pn-ae-ok-texto)}
+.p-pag-pend{background:var(--pn-pend-fundo);color:var(--pn-ae-aten-texto)}
+.p-pag-fat{background:var(--pn-info-fundo);color:var(--pn-ae-info-texto)}
+.p-st{display:inline-flex;align-items:center;justify-content:center;min-height:26px;padding:0 var(--pn-s6);border-radius:var(--pn-raio-chip);background:var(--pn-ok-fundo);color:var(--pn-ae-ok-texto);font-size:var(--pn-fs-menor);white-space:nowrap}
+.p-st-em_andamento,.p-st-diarista_a_caminho{background:var(--pn-info-fundo);color:var(--pn-ae-info-texto)}
+.p-st-agendado{background:var(--pn-pend-fundo);color:var(--pn-ae-aten-texto)}
+.p-st-concluida{display:inline-flex;flex-direction:column;align-items:center;font-size:var(--pn-fs-menor);color:var(--pn-ae-ok-texto)}
+.p-st-nota{display:inline-flex;align-items:center;gap:var(--pn-s1);font-weight:var(--pn-p6);color:var(--pn-texto)}
+.p-st-nota svg{color:var(--pn-amarelo);fill:var(--pn-amarelo)}
+
+/* ações da solicitação: Aprovar verde, Recusar vermelho, Negociar data laranja (fundo claro, como na imagem) */
+.p-ini .p-acoes-sol .btn{min-height:30px;padding:0 var(--pn-s6);border-color:transparent;font-family:var(--pn-sans);font-size:var(--pn-fs-texto);font-weight:var(--pn-p5)}
+.p-ini .p-acoes-sol .btn[aria-label^="Aprovar"]{background:var(--pn-ok-fundo);color:var(--pn-ae-ok-texto)}
+.p-ini .p-acoes-sol .btn[aria-label^="Recusar"]{background:var(--pn-erro-fundo);color:var(--pn-ae-pend-texto)}
+.p-ini .p-acoes-sol .btn[aria-label^="Negociar"]{background:var(--pn-negociar-fundo);color:var(--pn-negociar-texto)}
+.p-ini .p-acoes-sol .btn-icone,.p-ini .p-tabela .btn-icone{border-color:var(--pn-borda);background:var(--pn-branco);color:var(--pn-titulo)}
+
+/* Precisa de você: abas à esquerda, ícone tingido, aprovar em verde e recusar em vermelho, em quadrado claro */
+.p-ini .p-pend{grid-template-columns:118px minmax(0,1fr);gap:var(--pn-s6)}
+.p-ini .p-filtros-v button{min-height:32px;padding:var(--pn-s2) var(--pn-s4);font-size:var(--pn-fs-texto);color:var(--pn-texto)}
+.p-ini .p-filtros-v button[aria-pressed="true"]{background:var(--pn-negociar-fundo);color:var(--pn-negociar-texto);font-weight:var(--pn-p5);box-shadow:var(--pn-aba-ativa)}
+.p-ini .p-lista > li{gap:var(--pn-s6);padding:var(--pn-s4) 0;border-top-color:var(--pn-linha)}
+.p-ini .p-lista .p-texto-item{font-size:var(--pn-fs-texto)}
+.p-ini .p-lista .p-texto-item b{font-weight:var(--pn-p5);color:var(--pn-texto)}
+.p-ini .p-lista .p-texto-item span{color:var(--pn-texto-2)}
+.p-pend-ic{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:var(--pn-raio-btn)}
+.p-tom-ouro{background:var(--pn-negociar-fundo);color:var(--pn-ouro-3)}
+.p-tom-erro{background:var(--pn-erro-fundo);color:var(--pn-erro-texto)}
+.p-tom-info{background:var(--pn-info-halo);color:var(--pn-info-texto)}
+.p-ini .p-lista > li.urgente{box-shadow:none;padding-left:0}
+.p-ini .p-lista > li.urgente .p-texto-item b{color:var(--pn-ae-pend-texto)}
+.p-ini .p-lista > li.atencao .p-texto-item b{color:var(--pn-ae-aten-texto)}
+.p-ini .p-acoes-item .btn{min-height:30px;font-family:var(--pn-sans);font-size:var(--pn-fs-menor)}
+.p-ini .p-acoes-item .btn-icone{width:32px;border-color:transparent}
+.p-ini .p-acoes-item .btn-icone[aria-label$="aprovar"]{background:var(--pn-ok-fundo);color:var(--pn-ae-ok-texto)}
+.p-ini .p-acoes-item .btn-icone[aria-label$="recusar"]{background:var(--pn-erro-fundo);color:var(--pn-ae-pend-texto)}
+.p-ini .p-acoes-item a.p-btn{color:var(--pn-ae-pend-texto)}
+
+/* stand-by, alertas e cadastros: listas compactas, foto e WhatsApp verde */
+.p-ini .p-standby .p-acoes-item .btn[aria-label^="Confirmar"]{background:var(--pn-ok-fundo);border-color:transparent;color:var(--pn-ae-ok-texto)}
+.p-ini .p-standby .p-acoes-item .btn[aria-label^="Liberar"]{background:var(--pn-erro-fundo);border-color:transparent;color:var(--pn-ae-pend-texto)}
+.p-ini [data-bloco=inicio-alertas] .p-lista > li,.p-ini [data-bloco=inicio-cadastros] .p-lista > li{padding:var(--pn-s3) 0}
+
+/* indicadores: anel da meta, rosca e barras douradas */
+.p-ini-meta{margin-top:0}
+.p-ini-meta .pn-meta-n dt{font-size:var(--pn-fs-menor);color:var(--pn-texto-2)}
+.p-ini-coroa-p{display:inline-flex;color:var(--pn-ouro-detalhe)}
+.p-ini-graf{margin-top:0;grid-template-columns:108px minmax(0,1fr);gap:var(--pn-s8)}
+.p-ini-graf .pn-legenda th{white-space:normal;line-height:1.25;padding:var(--pn-s1) 0}
+.p-ini-graf .pn-legenda td{vertical-align:top;padding:var(--pn-s1) 0 var(--pn-s1) var(--pn-s4)}
+.p-ini-graf .pn-legenda th .pn-leg-ponto{margin-right:var(--pn-s3)}
+/* diárias de hoje e de amanhã lado a lado: colunas justas, nome numa linha, nada cortado */
+.p-ini [data-bloco=inicio-hoje] .p-tabela td,.p-ini [data-bloco=inicio-amanha] .p-tabela td,.p-ini [data-bloco=inicio-hoje] .p-tabela th,.p-ini [data-bloco=inicio-amanha] .p-tabela th{padding-left:var(--pn-s2);padding-right:var(--pn-s2)}
+.p-ini [data-bloco=inicio-hoje] .p-avatar-nome b,.p-ini [data-bloco=inicio-amanha] .p-avatar-nome b{max-width:72px}
+.p-ini [data-bloco=inicio-hoje] .p-principal-cel .p-forte,.p-ini [data-bloco=inicio-amanha] .p-principal-cel .p-forte{white-space:nowrap}
+.p-ini [data-bloco=inicio-hoje] .p-principal-cel .u-lin,.p-ini [data-bloco=inicio-amanha] .p-principal-cel .u-lin{flex-wrap:nowrap;gap:var(--pn-s2)}
+.p-ini .p-st{padding:0 var(--pn-s4)}
+.pn-leg-ponto{display:inline-block;width:9px;height:9px;margin-right:var(--pn-s4);border-radius:var(--pn-raio-pilula);vertical-align:middle}
+.p-ini .p-barras li{grid-template-columns:minmax(0,110px) minmax(0,1fr) 36px;font-size:var(--pn-fs-texto)}
+.p-ini .p-barras button{color:var(--pn-titulo)}
+.p-ini .p-barra{height:11px;background:var(--pn-trilho)}
+.p-ini .p-barra i{border-radius:var(--pn-raio-pilula);background:var(--pn-barra-degrade)}
+.p-ini .p-alternancia{border-color:var(--pn-borda);border-radius:var(--pn-raio-pilula);background:var(--pn-branco)}
+.p-ini .p-alternancia button{border-radius:var(--pn-raio-pilula);color:var(--pn-texto)}
+.p-ini .p-alternancia button[aria-pressed="true"]{background:var(--pn-ouro-degrade);color:var(--pn-titulo);box-shadow:none}
+
+/* ---------- grade da imagem 05 */
+.p-ini .p-grade{gap:var(--pn-gap)}
+.p-ini-l2{grid-template-columns:repeat(2,minmax(0,1fr));align-items:start}
+.p-ini-l3{display:flex;align-items:flex-start}
+.p-ini-l3 > .p-bloco{flex:1 1 0;min-width:0}
+.p-ini-l3 > [data-bloco=inicio-pendencias]{flex-grow:1.8}
+.p-ini-l3 > [data-bloco=inicio-standby]{flex-grow:1.25}
+.p-ini-l3 > [data-bloco=inicio-alertas]{flex-grow:1.1}
+.p-ini-l4{grid-template-columns:minmax(0,1.45fr) minmax(0,1fr) minmax(0,1.12fr);align-items:start}
+@media (max-width:1279px){
+  .p-ini-l2,.p-ini-l4{grid-template-columns:minmax(0,1fr)}
+  .p-ini-l3{flex-wrap:wrap}
+  .p-ini-l3 > [data-bloco=inicio-pendencias]{flex-basis:100%}
+  .p-ini-l3 > .p-bloco:not([data-bloco=inicio-pendencias]){flex-basis:calc(33% - var(--pn-gap))}
+}
+@media (max-width:1023px){.p-ini-l3 > .p-bloco:not([data-bloco=inicio-pendencias]){flex-basis:100%}}
+@media (max-width:759px){
+  .p-conteudo.p-ini{padding:var(--pn-s6) var(--pn-s6) calc(88px + env(safe-area-inset-bottom))}
+  .p-ini-cab{flex-direction:column;align-items:stretch}
+  .p-ini-saudacao h1{font-size:var(--fs-28)}
+  .p-ini-saudacao p{font-size:var(--fs-14)}
+  .p-ini-cab-dir{flex-direction:column}
+  .p-ini .p-pend{grid-template-columns:minmax(0,1fr)}
+  .p-ini .p-tabela tr.p-lin{background:var(--pn-branco);border-color:var(--pn-borda)}
+  .p-ini .p-tabela tr.p-lin td{padding:var(--pn-s2) 0;border-bottom:0}
+  .p-ini .p-acoes-item .btn-icone{width:var(--alvo)}
+  .p-ini .p-acoes-item .btn{min-height:var(--alvo)}
+  .p-ini .p-acoes-sol .btn{min-height:var(--alvo)}
+  .p-ini .p-recolher,.p-ini .p-zap{width:var(--alvo);height:var(--alvo)}
+  .p-ini .p-extra .p-btn,.p-ini .p-filtros-v button{min-height:var(--alvo)}
+  .p-barra-inferior{background:var(--pn-branco)}
+}
+
+/* ---------- rodada 2 das bancas (17/11/2026) */
+.p-marca-simbolo{display:none}
+.p-casca-recolhida .p-marca-logo{display:none}
+.p-casca-recolhida .p-marca-simbolo{display:block;width:44px;height:auto}
+/* fileiras com a mesma altura, como na imagem 05; o atalho do pé encosta no fim do cartão */
+.p-ini-l2,.p-ini-l4{align-items:stretch}
+.p-ini-l3{align-items:stretch}
+/* títulos: o nome do bloco e a contagem ficam juntos; o selo de urgência e o atalho descem se faltar espaço */
+.p-ini .p-ini-l3 .p-titulo-linha{flex-wrap:nowrap}
+.p-ini .p-ini-l3 .p-cont-bloco{flex-wrap:wrap;row-gap:var(--pn-s1)}
+.p-ini .p-ini-l3 .p-bloco-ic{width:30px;height:30px}
+.p-ini .p-ini-l3 .p-bloco-ic svg{width:17px;height:17px}
+.p-ini .p-ini-l4 .p-bloco-cab{flex-wrap:wrap}
+.p-ini .p-ini-l4 .p-bloco-cab h2{white-space:nowrap}
+.p-ini-meta .pn-meta-n dt{white-space:nowrap}
+.p-ini-graf .pn-legenda th{white-space:nowrap;max-width:150px;overflow:hidden;text-overflow:ellipsis}
+.p-ini-l3 > [data-bloco=inicio-pendencias]{flex-grow:1.5}
+.p-ini-l3 > [data-bloco=inicio-standby]{flex-grow:1.15}
+.p-ini-l3 > [data-bloco=inicio-alertas]{flex-grow:1.1}
+/* diárias lado a lado em notebook: some o WhatsApp da cliente (fica o da profissional) e, abaixo de 1366, a coluna Horas */
+@media (max-width:1439px){.p-ini .p-dia-cliente .p-zap{display:none}}
+@media (min-width:1280px) and (max-width:1365px){.p-ini .p-col-horas{display:none}}
+@media (max-width:759px){
+  .p-busca-campo input{font-size:var(--fs-16)}
+  .p-ini .p-acoes-item a.p-btn,.p-ini .p-alternancia button{min-height:var(--alvo)}
+  .p-ini .p-filtros-v{flex-wrap:wrap;overflow-x:visible}
+  .p-ini .p-pontos{flex-wrap:wrap}
+  .p-ini .p-pontos span{white-space:nowrap}
+}
+@media (max-width:1439px){
+  .p-ini [data-bloco=inicio-hoje] .p-st,.p-ini [data-bloco=inicio-amanha] .p-st{padding:0 var(--pn-s3)}
+  .p-ini [data-bloco=inicio-hoje] .p-avatar-nome b,.p-ini [data-bloco=inicio-amanha] .p-avatar-nome b{max-width:58px;overflow:hidden;text-overflow:ellipsis}
+  .p-ini [data-bloco=inicio-hoje] .p-pag,.p-ini [data-bloco=inicio-amanha] .p-pag{min-width:48px;padding:var(--pn-s1) var(--pn-s3)}
+}
+@media (min-width:1280px) and (max-width:1365px){.p-ini [data-bloco=inicio-hoje] .p-tabela :is(td,th),.p-ini [data-bloco=inicio-amanha] .p-tabela :is(td,th){padding-left:var(--pn-s1);padding-right:var(--pn-s1)}}
+/* "Precisa de você" no cartão estreito da imagem 05: ícone e texto na largura toda; as ações descem pra baixo, à direita */
+@media (min-width:1280px){
+  .p-ini [data-bloco=inicio-pendencias] .p-lista > li{display:grid;grid-template-columns:30px minmax(0,1fr);column-gap:var(--pn-s6);row-gap:var(--pn-s2);align-items:start}
+  .p-ini [data-bloco=inicio-pendencias] .p-lista .p-acoes-item{grid-column:2;justify-self:end}
+  .p-ini [data-bloco=inicio-pendencias] .p-pend{grid-template-columns:88px minmax(0,1fr)}
+}
+.p-ini-graf .pn-legenda td{white-space:nowrap}
+@media (max-width:1439px){.p-ini-graf{grid-template-columns:96px minmax(0,1fr);gap:var(--pn-s6)}.p-ini-graf .pn-rosca{width:96px;height:96px}.p-ini-graf .pn-legenda th{max-width:118px}}
+
+/* ---------- rodada 3 das bancas (17/11/2026) */
+/* cabeçalhos da 3ª e 4ª fileiras: título e contagem numa linha, o botão de recolher sempre no canto de cima */
+.p-ini .p-ini-l3 .p-bloco-cab,.p-ini .p-ini-l4 .p-bloco-cab{flex-wrap:nowrap;align-items:flex-start}
+.p-ini .p-ini-l3 .p-bloco-cab h2,.p-ini .p-ini-l4 .p-bloco-cab h2{font-size:var(--pn-fs-bloco-4)}
+.p-ini .p-ini-l3 .p-bloco-cab .p-titulo-linha{flex-wrap:wrap}
+.p-ini-l3 > [data-bloco=inicio-pendencias]{flex-grow:1.45}
+.p-ini-l3 > [data-bloco=inicio-standby]{flex-grow:1.1}
+.p-ini-l3 > [data-bloco=inicio-alertas]{flex-grow:1.2}
+.p-ini-l3 > [data-bloco=inicio-cadastros]{flex-grow:1.05}
+/* o resumo do cabeçalho (primeiro alerta, explicação dos cadastros) só aparece com o bloco recolhido */
+.p-ini [data-bloco=inicio-alertas]:has(.p-bloco-corpo:not([hidden])) .p-sub,.p-ini [data-bloco=inicio-cadastros]:has(.p-bloco-corpo:not([hidden])) .p-sub{display:none}
+/* diárias de hoje e de amanhã: até 5 linhas à vista, o resto rola dentro do cartão (as duas fecham juntas) */
+@media (min-width:1280px){
+  .p-ini [data-bloco=inicio-hoje] .p-tabela-wrap,.p-ini [data-bloco=inicio-amanha] .p-tabela-wrap{max-height:322px;overflow-y:auto}
+  .p-ini [data-bloco=inicio-hoje] .p-tabela thead th,.p-ini [data-bloco=inicio-amanha] .p-tabela thead th{position:sticky;top:0;z-index:1}
+}
+.p-ini-regioes-alt{display:flex;justify-content:flex-end;margin-bottom:var(--pn-s4)}
+.p-ini [data-bloco=inicio-regioes] .p-alternancia button{min-height:28px}
+/* pagamento (atenção) em âmbar escuro; vermelho só no urgente */
+.p-ini .p-lista > li.atencao .p-texto-item b{color:var(--pn-ae-decisao-texto)}
+@media (max-width:1439px){.p-ini-graf .pn-rosca{width:84px;height:84px}.p-ini-graf{grid-template-columns:84px minmax(0,1fr)}}
+@media (max-width:759px){.p-ini .p-acoes-item a.p-btn{min-width:var(--alvo);justify-content:center}}
+
+/* ---------- rodada 4 das bancas (17/11/2026) */
+/* diárias lado a lado: o resumo (confirmadas, pendentes, atalho) sempre na linha de baixo, nos dois cartões; as tabelas
+   começam na mesma altura e o recolher fica no canto */
+.p-ini .p-ini-l2 .p-bloco-cab{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;row-gap:var(--pn-s3)}
+.p-ini .p-ini-l2 .p-extra{display:contents}
+.p-ini .p-ini-l2 .p-extra-itens{grid-row:2;grid-column:1/-1;justify-content:flex-start}
+.p-ini .p-ini-l2 .p-recolher{grid-row:1;grid-column:2}
+/* mais de 5 diárias: meia linha aparece na borda (sinal de que rola) e o pé diz quantas são */
+@media (min-width:1280px){.p-ini [data-bloco=inicio-hoje] .p-tabela-wrap,.p-ini [data-bloco=inicio-amanha] .p-tabela-wrap{max-height:352px}}
+/* stand-by compacto: confirmar e liberar com ícone na linha do nome (o nome acessível continua "Confirmar Fulana") */
+@media (min-width:1280px){
+  .p-ini .p-lista > li.p-standby{flex-wrap:nowrap;align-items:flex-start}
+  .p-ini .p-standby-pessoa{flex:1 1 0}
+  .p-ini .p-standby .p-acoes-item .btn{width:32px;min-height:32px;padding:0;font-size:var(--pn-fs-0);gap:0}
+  .p-ini .p-standby .p-acoes-item .btn svg{width:16px;height:16px}
+  .p-ini [data-bloco=inicio-pendencias] .p-lista{max-height:262px}
+}
+/* títulos dos cartões estreitos numa linha; abaixo de 1440 o ícone do cabeçalho sai pra dar lugar */
+.p-ini .p-ini-l3 .p-bloco-cab h2{white-space:nowrap}
+@media (max-width:1439px){.p-ini [data-bloco=inicio-alertas] .p-bloco-ic,.p-ini [data-bloco=inicio-cadastros] .p-bloco-ic,.p-ini [data-bloco=inicio-standby] .p-bloco-ic{display:none}}
+.p-ini .p-bloco-cab .p-sub{text-wrap:balance}
+/* legenda da rosca: rosca de 88 px em todas as larguras, a legenda ganha espaço */
+.p-ini-graf{grid-template-columns:88px minmax(0,1fr)}
+.p-ini-graf .pn-rosca{width:88px;height:88px}
+.p-ini-graf .pn-legenda th{max-width:170px}
+/* ---------- rodada 5 das bancas (17/11/2026) */
+/* legenda da rosca: o número nunca corta; o rótulo encolhe com reticências (texto inteiro no title) */
+.p-ini-graf .pn-legenda{table-layout:fixed}
+.p-ini-graf .pn-legenda td{width:64px}
+.p-ini-graf .pn-legenda th{max-width:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media (max-width:1439px){.p-ini-graf{grid-template-columns:72px minmax(0,1fr);gap:var(--pn-s4)}.p-ini-graf .pn-rosca{width:72px;height:72px}.p-ini-graf .pn-anel-n b{font-size:var(--pn-fs-numero-2)}}
+/* solicitações em tela menor que 1280: Recusar e Negociar data só com o ícone (o nome fica no aria-label); Aprovar segue com texto */
+@media (min-width:760px) and (max-width:1279px){
+  .p-ini .p-acoes-sol .btn[aria-label^="Recusar"],.p-ini .p-acoes-sol .btn[aria-label^="Negociar"]{width:36px;padding:0;font-size:var(--pn-fs-0);gap:0}
+  .p-ini .p-acoes-sol .btn svg{width:16px;height:16px}
+}
+/* stand-by: o nome inteiro, em até duas linhas, nunca com reticências */
+.p-ini .p-standby .p-avatar-nome b{white-space:normal;overflow:visible}
+/* tablet (760 a 1023): Local e Imóvel das solicitações ficam só no detalhe da linha, como no celular */
+@media (min-width:760px) and (max-width:1023px){.p-ini [data-bloco=inicio-solicitacoes] .p-oculta-celular{display:none}}
+@media (min-width:760px) and (max-width:1023px){.p-ini .p-acoes-sol .btn[aria-label^="Aprovar"]{width:36px;padding:0;font-size:var(--pn-fs-0);gap:0}}
+@media (min-width:760px) and (max-width:1023px){.p-ini [data-bloco=inicio-solicitacoes] .p-tabela :is(td,th){padding-left:var(--pn-s2);padding-right:var(--pn-s2)}}
+/* rodada 5: legenda com o rótulo inteiro em até duas linhas e só a porcentagem (a contagem fica no title e o total no meio da rosca) */
+.p-ini-graf .pn-legenda td{width:40px;vertical-align:top}
+.p-ini-graf .pn-legenda th{white-space:normal;overflow:visible;text-overflow:clip;line-height:1.25;padding-bottom:var(--pn-s2)}
+@media (max-width:1439px){.p-ini-graf .pn-anel-n small{font-size:var(--pn-fs-10)}}
+@media (min-width:760px) and (max-width:1099px){.p-ini [data-bloco=inicio-solicitacoes] .p-oculta-celular{display:none}.p-ini [data-bloco=inicio-solicitacoes] .p-principal-cel .p-forte{white-space:nowrap}}
+.p-ini .p-lista .p-texto-item b{text-wrap:pretty}
+/* rodada 6: a coluna da porcentagem encolhe ao tamanho do número; o rótulo fica com o resto (1 ou 2 linhas) */
+.p-ini-graf .pn-legenda{table-layout:auto}
+.p-ini-graf .pn-legenda td{width:1%;white-space:nowrap;padding-left:var(--pn-s4)}
+.p-ini-graf .pn-legenda th{width:auto}
+.p-ini-graf .pn-legenda th{text-wrap:balance}

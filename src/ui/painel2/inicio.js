@@ -7,12 +7,13 @@ import { url, ADAPTER } from '../../config/app.js';
 import { api } from '../../services/api.js';
 import { executarAcao } from '../acoes.js';
 import { formatarBRL } from '../../domain/dinheiro.js';
-import { formatarData, somarDias, diaDaSemana, NOMES_DIA } from '../../domain/calendario.js';
+import { somarDias, diaDaSemana, NOMES_DIA } from '../../domain/calendario.js';
 import { horariosPermitidos } from '../../domain/agendamento-v3.js';
 import { CONFIG_PRECOS as CFG } from '../../config/precos.js';
 import { detalhesSolicitacaoV3 } from '../paginas/painel-v3.js';
 import { icone, ICONE_SERVICO } from './icones.js';
 import { convidarTour, iniciarTour } from './tour.js';
+import { anel, rosca, COR_G } from './inicio-vista.js';
 import {
   bloco, botao, selo, avatar, zap, tabelaExpansivel, detalhe, filtrosVerticais, tudoResolvido, vazio, pedirMotivo, modal, confirmar,
   painelLateral, barras, esqueleto,
@@ -32,6 +33,13 @@ const ESTADO_DIARIA = {
   finalizado: ['Concluída', 'ok'], avaliado: ['Concluída', 'ok'],
 };
 const SITUACAO_PEDIDO = { aguardando_pagamento: ['Aguardando pagamento', 'aguardando'], disponibilidade_confirmada: ['Aguardando pagamento', 'aguardando'], confirmado: ['Confirmada', 'ok'], concluido: ['Concluída', 'ok'], recusado: ['Recusada', 'urgente'], cancelado: ['Cancelada', 'neutro'] };
+const MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+const maiuscula = (t) => t.replace(/^./, (c) => c.toUpperCase());
+const dataExtensa = (d) => `${Number(d.slice(8, 10))} de ${MESES[Number(d.slice(5, 7)) - 1]} de ${d.slice(0, 4)}`;
+// Pagamento pendente não trava nada (spec da Agenda e Escala, seção 7): no Início ele aparece como atenção, nunca como
+// urgente vermelho, e não entra na contagem de urgentes do bloco. O procedimento depois do prazo ainda é decisão da Isa.
+const PAGAMENTO_SEM_URGENCIA = new Set(['pagamento_vencido', 'pagamento_verificacao']);
+const urgenteNaTela = (x) => !!x.urgente && !PAGAMENTO_SEM_URGENCIA.has(x.tipo);
 const hhmm = (iso) => new Date(iso).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' });
 
 /** Cache curto (30 s) por bloco, invalidado depois de cada ação. */
@@ -55,10 +63,11 @@ export async function telaInicio({ sessao, hoje, casca }) {
   const h = Number(new Date().toLocaleString('en-GB', { hour: '2-digit', hourCycle: 'h23', timeZone: 'America/Sao_Paulo' }));
   const saudacao = `${h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite'}, ${primeiro(sessao?.nome) || 'equipe'}!`;
   const sistema = blocoSistema();
+  const diaSemana = maiuscula(NOMES_DIA[diaDaSemana(hoje)]);
 
   // ---------------------------------------------------------------- solicitações novas
   blocos.solicitacoes = bloco({
-    id: 'inicio-solicitacoes', titulo: 'Solicitações novas', ic: 'solicitacoes', rotuloContagem: (n) => `${n} ${n === 1 ? 'solicitação nova' : 'solicitações novas'}`,
+    id: 'inicio-solicitacoes', titulo: 'Solicitações novas', ic: 'solicitacoes', sub: 'Analise, aprove, recuse ou negocie a data das novas solicitações de atendimento.', rotuloContagem: (n) => `${n} ${n === 1 ? 'solicitação nova' : 'solicitações novas'}`,
     extra: [el('a', { class: 'p-btn', href: url('painel/', { tela: 'solicitacoes' }) }, ['Ver todas', icone('seta', { pequeno: true })])],
     carregar: async () => {
       const r = await dado('solicitacoes', () => api.painelSolicitacoesNovas(20));
@@ -79,14 +88,17 @@ export async function telaInicio({ sessao, hoje, casca }) {
 
   // ---------------------------------------------------------------- diárias de hoje e de amanhã
   blocos.diariasHoje = blocoDiarias({ id: 'inicio-hoje', titulo: 'Diárias de hoje', data: hoje, recarregar });
-  blocos.diariasAmanha = blocoDiarias({ id: 'inicio-amanha', titulo: 'Diárias de amanhã', data: amanha, recarregar, recolhido: true });
+  blocos.diariasAmanha = blocoDiarias({ id: 'inicio-amanha', titulo: 'Diárias de amanhã', data: amanha, recarregar, recolhidoNoCelular: true });
 
   // ---------------------------------------------------------------- precisa de você
   let filtro = 'todas';
   blocos.pendencias = bloco({
-    id: 'inicio-pendencias', titulo: 'Precisa de você', ic: 'alerta', rotuloContagem: (n) => `${n} ${n === 1 ? 'pendência' : 'pendências'}`,
+    id: 'inicio-pendencias', titulo: 'Precisa de você', ic: 'calendario_ok', rotuloContagem: (n) => `${n} ${n === 1 ? 'pendência' : 'pendências'}`,
     carregar: async () => {
-      const r = await dado('pendencias', () => api.painelPendencias());
+      const r0 = await dado('pendencias', () => api.painelPendencias());
+      // urgência da tela (pagamento pendente vira atenção) e a ordem acompanha: urgentes primeiro, o resto como veio
+      const itens = [...r0.itens].sort((a, b) => Number(urgenteNaTela(b)) - Number(urgenteNaTela(a)));
+      const r = { ...r0, itens, urgentes: itens.filter(urgenteNaTela).length };
       if (!r.itens.length) return { contagem: 0, conteudo: tudoResolvido('Tudo resolvido. Nada esperando por você agora.') };
       const CATS = [['todas', 'Todas'], ['escala', 'Escala'], ['financeiro', 'Financeiro'], ['contratos', 'Contratos'], ['ocorrencias', 'Ocorrências'], ['automacoes', 'Automações']];
       // todas inteiras, sem rolagem interna: a lista cortada no meio parecia quebrada e "Mostrar mais" escondia o que o
@@ -95,16 +107,26 @@ export async function telaInicio({ sessao, hoje, casca }) {
       const desenhar = () => trocar(lista, ...r.itens.filter((x) => filtro === 'todas' || x.categoria === filtro).map((x) => itemPendencia(x, { hoje, recarregar, motivos })));
       desenhar();
       const ops = CATS.map(([k, rot]) => [k, rot, k === 'todas' ? r.itens.length : r.itens.filter((x) => x.categoria === k).length]).filter(([k, , n]) => k === 'todas' || n);
+      // como na imagem 05: no computador a lista mostra uns cinco itens (o resto rola dentro do bloco, nada some da tela)
+      // e "Ver todas as pendências" abre a lista inteira no lugar
+      lista.id = 'inicio-pend-lista';
+      const todas = r.itens.length > 5 ? el('button', { type: 'button', class: 'p-link', 'aria-expanded': 'false', 'aria-controls': 'inicio-pend-lista' }, [`Ver todas as pendências (${r.itens.length})`, icone('seta', { pequeno: true })]) : null;
+      todas?.addEventListener('click', () => {
+        const abrir = !lista.classList.contains('p-lista-cheia');
+        lista.classList.toggle('p-lista-cheia', abrir); todas.setAttribute('aria-expanded', String(abrir));
+        trocar(todas, abrir ? 'Mostrar menos' : `Ver todas as pendências (${r.itens.length})`, icone(abrir ? 'acima' : 'seta', { pequeno: true }));
+      });
       return {
         contagem: r.itens.length, urgentes: r.urgentes,
         conteudo: el('div', { class: 'p-pend' }, [filtrosVerticais(ops, filtro, (v) => { filtro = v; desenhar(); }), lista]),
+        rodape: todas ? [todas] : [],
       };
     },
   });
 
   // ---------------------------------------------------------------- stand-by de hoje (só se houver)
   blocos.standby = bloco({
-    id: 'inicio-standby', titulo: 'Stand-by de hoje', ic: 'profissionais', someSeVazio: true,
+    id: 'inicio-standby', titulo: 'Stand-by de hoje', ic: 'usuario', someSeVazio: true,
     carregar: async () => {
       const r = await dado('standby', () => api.painelStandby(hoje));
       if (!r.itens.length) return { vazio: true };
@@ -115,7 +137,7 @@ export async function telaInicio({ sessao, hoje, casca }) {
 
   // ---------------------------------------------------------------- alertas importantes (só se houver)
   blocos.alertas = bloco({
-    id: 'inicio-alertas', titulo: 'Alertas importantes', ic: 'sino', recolhido: true, someSeVazio: true,
+    id: 'inicio-alertas', titulo: 'Alertas importantes', ic: 'sino', recolhidoNoCelular: true, someSeVazio: true,
     carregar: async () => {
       const r = await dado('alertas', () => api.painelAlertas());
       if (!r.itens.length) return { vazio: true };
@@ -131,7 +153,7 @@ export async function telaInicio({ sessao, hoje, casca }) {
 
   // ---------------------------------------------------------------- novos cadastros (cadastros sem solicitação)
   blocos.cadastros = bloco({
-    id: 'inicio-cadastros', titulo: 'Novos cadastros', ic: 'usuario_mais', recolhido: true, someSeVazio: true,
+    id: 'inicio-cadastros', titulo: 'Novos cadastros', ic: 'usuario', recolhidoNoCelular: true, someSeVazio: true,
     carregar: async () => {
       const r = await dado('cadastros', () => api.listarCadastrosSemSolicitacao({ status: 'novo' }));
       if (!r.itens.length) return { vazio: true };
@@ -145,20 +167,28 @@ export async function telaInicio({ sessao, hoje, casca }) {
 
   // ---------------------------------------------------------------- indicadores (só os três da Home)
   const ind = () => dado('indicadores', () => api.painelIndicadoresHome(null));
-  blocos.meta = bloco({ id: 'inicio-meta', titulo: 'Meta de diárias', ic: 'meta', recolhido: true, carregar: async () => blocoMeta(await ind()) });
-  blocos.motivos = bloco({ id: 'inicio-motivos', titulo: 'Motivos de cancelamento', ic: 'rosca', recolhido: true, carregar: async () => blocoMotivos(await ind()) });
-  blocos.regioes = bloco({ id: 'inicio-regioes', titulo: 'Regiões mais atendidas', ic: 'mapa', recolhido: true, carregar: async () => blocoRegioes(await ind()) });
+  blocos.meta = bloco({ id: 'inicio-meta', titulo: 'Meta de diárias', ic: 'meta', recolhidoNoCelular: true, carregar: async () => blocoMeta(await ind()) });
+  blocos.motivos = bloco({ id: 'inicio-motivos', titulo: 'Motivos de cancelamento', ic: 'calendario_x', recolhidoNoCelular: true, carregar: async () => blocoMotivos(await ind()) });
+  blocos.regioes = bloco({ id: 'inicio-regioes', titulo: 'Regiões mais atendidas', ic: 'local', recolhidoNoCelular: true, carregar: async () => blocoRegioes(await ind()) });
 
+  // como na imagem 05 da cliente (17/11/2026): saudação com a coroa, "Sistema trabalhando por você" e a data à direita;
+  // solicitações na largura toda, diárias de hoje e de amanhã lado a lado, depois pendências, stand-by, alertas e
+  // cadastros numa linha e os três indicadores na última
+  casca.conteudo.classList.add('p-ini');
   trocar(casca.conteudo,
-    el('div', { class: 'p-cabecalho' }, [el('div', {}, [el('h1', { text: saudacao }), el('p', { text: `${NOMES_DIA[diaDaSemana(hoje)].replace(/^./, (c) => c.toUpperCase())}, ${formatarData(hoje)}` })]), sistema.raiz]),
+    el('div', { class: 'p-cabecalho p-ini-cab' }, [
+      el('div', { class: 'p-ini-saudacao' }, [
+        el('h1', {}, [saudacao, el('span', { class: 'p-ini-coroa', 'aria-hidden': 'true' }, [icone('coroa_c')])]),
+        el('p', {}, ['Tudo organizado para mais um dia de grandes resultados.', el('span', { class: 'p-ini-brilho', 'aria-hidden': 'true' }, [icone('brilho', { pequeno: true })])]),
+      ]),
+      el('div', { class: 'p-ini-cab-dir' }, [sistema.raiz,
+        el('p', { class: 'p-ini-data' }, [el('span', { class: 'p-ini-data-ic', 'aria-hidden': 'true' }, [icone('calendario_d')]), el('span', {}, [`${diaSemana},`, el('br'), dataExtensa(hoje)])])]),
+    ]),
     convidarTour(),
-    // o que precisa da equipe vem primeiro (referências, princípio 11): solicitações novas e "Precisa de você";
-    // depois o dia (diárias de hoje e amanhã), os avisos e, por último, os indicadores
     blocos.solicitacoes.raiz,
-    el('div', { class: 'p-grade p-linha-pend' }, [blocos.pendencias.raiz, blocos.standby.raiz]),
-    el('div', { class: 'p-grade p-grade-2' }, [blocos.diariasHoje.raiz, blocos.diariasAmanha.raiz]),
-    el('div', { class: 'p-grade p-grade-2 p-grade-avisos' }, [blocos.alertas.raiz, blocos.cadastros.raiz]),
-    el('div', { class: 'p-grade p-grade-3' }, [blocos.meta.raiz, blocos.motivos.raiz, blocos.regioes.raiz]));
+    el('div', { class: 'p-grade p-ini-l2' }, [blocos.diariasHoje.raiz, blocos.diariasAmanha.raiz]),
+    el('div', { class: 'p-grade p-ini-l3' }, [blocos.pendencias.raiz, blocos.standby.raiz, blocos.alertas.raiz, blocos.cadastros.raiz]),
+    el('div', { class: 'p-grade p-ini-l4' }, [blocos.meta.raiz, blocos.motivos.raiz, blocos.regioes.raiz]));
   // cada bloco carrega e desenha sozinho (sem travar os outros)
   for (const b of Object.values(blocos)) b.recarregar();
   sistema.carregar();
@@ -202,14 +232,14 @@ export function linhaSolicitacao(s, motivosRecusa, depois) {
   const imovel = el('span', {}, [el('span', { class: 'u-nowrap', text: imovel1 }), el('span', { class: 'p-linha2', text: imovel2 })]);
   const servico = el('span', {}, [nomeServico(s.servico),
     s.quantidade > 1 ? el('span', { class: 'p-linha2', text: `${s.quantidade} ${s.modalidade === 'multi_profissional' ? 'profissionais' : 'diárias'}` }) : null]);
-  const aprovar = botao('Aprovar', { tom: 'ok', rotulo: `Aprovar a solicitação de ${s.cliente.nome}`, acao: (k) => api.confirmarDisponibilidade(s.pedidoId, {}, { chave: k }),
+  const aprovar = botao('Aprovar', { tom: 'ok', ic: 'check', rotulo: `Aprovar a solicitação de ${s.cliente.nome}`, acao: (k) => api.confirmarDisponibilidade(s.pedidoId, {}, { chave: k }),
     sucesso: 'Disponibilidade confirmada. A cliente recebe a cobrança no WhatsApp.', aoSucesso: depois });
-  const recusar = botao('Recusar', { rotulo: `Recusar a solicitação de ${s.cliente.nome}`, aoClicar: async () => {
+  const recusar = botao('Recusar', { ic: 'fechar', rotulo: `Recusar a solicitação de ${s.cliente.nome}`, aoClicar: async () => {
     const m = await pedirMotivo({ titulo: `Recusar a solicitação de ${primeiro(s.cliente.nome)}`, motivos: motivosRecusa, rotuloConfirmar: 'Recusar e avisar a cliente',
       consequencia: 'A cliente recebe a recusa com o motivo pelo WhatsApp. Fica registrado no histórico.' });
     if (m) await executarAcao(recusar, (k) => api.recusarSolicitacao(s.pedidoId, { motivo: m.texto }, { chave: k }), { sucesso: 'Solicitação recusada.', aoSucesso: depois });
   } });
-  const negociar = botao('Negociar data', { rotulo: `Negociar data com ${s.cliente.nome}`, aoClicar: () => negociarData(s, depois) });
+  const negociar = botao('Negociar data', { ic: 'calendario_d', rotulo: `Negociar data com ${s.cliente.nome}`, aoClicar: () => negociarData(s, depois) });
   const mais = botao('Ver a solicitação completa', { ic: 'mais', soIcone: true, aoClicar: () => verSolicitacao(s) });
   const avisos = [s.enderecoNovoPacote ? selo('Endereço novo no pacote', 'aguardando') : null, s.proposta ? selo(`Data proposta: ${ddmm(s.proposta.data)} ${s.proposta.horaInicio}`, 'info') : null].filter(Boolean);
   return {
@@ -291,9 +321,9 @@ function negociarData(s, depois) {
 }
 
 // ---------------------------------------------------------------- diárias do dia
-function blocoDiarias({ id, titulo, data, recolhido = false }) {
+function blocoDiarias({ id, titulo, data, recolhido = false, recolhidoNoCelular = false }) {
   return bloco({
-    id, titulo: `${titulo}`, recolhido, ic: 'agenda', rotuloContagem: (n) => `${n} ${n === 1 ? 'diária' : 'diárias'}`,
+    id, titulo: `${titulo}`, recolhido, recolhidoNoCelular, ic: 'calendario_ok', rotuloContagem: (n) => `${n} ${n === 1 ? 'diária' : 'diárias'}`,
     carregar: async () => {
       const r = await dado(`diarias:${data}`, () => api.painelDiarias(data));
       const semProf = r.itens.filter((d) => !d.profissional && !['finalizado', 'avaliado'].includes(d.status)).length;
@@ -301,9 +331,9 @@ function blocoDiarias({ id, titulo, data, recolhido = false }) {
         r.pendentes ? el('span', { class: 'aguardando', text: `${r.pendentes} ${r.pendentes === 1 ? 'pendente' : 'pendentes'}` }) : null,
         semProf ? el('span', { class: 'urgente', text: `${semProf} sem profissional` }) : null])];
       // amanhã (escala do dia seguinte): o atalho fica no cabeçalho, onde ficava o selo da escala, visível com o bloco recolhido
-      if (id === 'inicio-amanha') extra.push(el('a', { class: 'p-link', href: url('painel/', { tela: 'agenda', data }), text: 'Abrir na Agenda e Escala' }));
+      extra.push(el('a', { class: 'p-btn', href: url('painel/', { tela: 'agenda', data }) }, ['Ver agenda completa', icone('seta', { pequeno: true })]));
       return {
-        contagem: r.itens.length, urgentes: semProf, extra, rodape: [el('a', { class: 'p-link', href: url('painel/', { tela: 'agenda', data }) }, ['Abrir na Agenda e Escala', icone('seta', { pequeno: true })])],
+        contagem: r.itens.length, urgentes: semProf, extra, rodape: [el('a', { class: 'p-link', href: url('painel/', { tela: 'agenda', data }) }, [r.itens.length > 5 ? `Abrir na Agenda e Escala (${r.itens.length} diárias)` : 'Abrir na Agenda e Escala', icone('seta', { pequeno: true })])],
         conteudo: r.itens.length ? tabelaExpansivel({
           rotulo: titulo,
           colunas: COLUNAS_DIARIA,
@@ -314,23 +344,28 @@ function blocoDiarias({ id, titulo, data, recolhido = false }) {
   });
 }
 
-export const COLUNAS_DIARIA = [{ rotulo: 'Horário' }, { rotulo: 'Cliente / Local', classe: 'p-principal-cel' }, { rotulo: 'Serviço', classe: 'p-oculta-celular' }, { rotulo: 'Profissional' },
-  { rotulo: 'Pagamento e status' }];
+export const COLUNAS_DIARIA = [{ rotulo: 'Horário' }, { rotulo: 'Cliente / Local', classe: 'p-principal-cel' }, { rotulo: 'Serviço', classe: 'p-oculta-celular p-cel-ic' }, { rotulo: 'Horas', classe: 'p-oculta-celular p-col-horas' },
+  { rotulo: 'Profissional' }, { rotulo: 'Pagamento' }, { rotulo: 'Status' }];
 export function linhaDiaria(d) {
-  const [rot, tom] = ESTADO_DIARIA[d.status] || [d.status, 'neutro'];
-  // um selo por linha (a situação); o pagamento vai como texto de apoio, em cor de atenção só quando está pendente
-  const pg = d.pagamento?.estado === 'pago' ? el('span', { class: 'p-linha2', text: `Pago no ${d.pagamento.forma === 'cartao' ? 'cartão' : 'PIX'}` })
-    : d.pagamento?.estado === 'a_faturar' ? el('span', { class: 'p-linha2', text: 'A faturar' }) : el('span', { class: 'p-linha2 p-pendente', text: 'PIX pendente' });
-  const status = el('span', {}, [['aguardando', 'urgente'].includes(tom) ? selo(rot, tom) : el('span', { class: 'p-sec', text: rot }), d.nota ? el('span', { class: 'p-linha2 u-lin' }, [icone('estrela', { pequeno: true }), String(d.nota).replace('.', ',')]) : null]);
-  const prof = d.profissional ? el('span', { class: 'u-lin' }, [avatar(d.profissional.nome.split(' ')[0], { habilidades: d.profissional.habilidades }), zap(d.profissional.telefone, d.profissional.nome)])
+  const [rot] = ESTADO_DIARIA[d.status] || [d.status, 'neutro'];
+  // pagamento e status em selos de duas cores, como na imagem 05 (pendente em laranja: avisa, não trava)
+  const est = d.pagamento?.estado;
+  const pg = el('span', { class: `p-pag ${est === 'pago' ? 'p-pag-ok' : est === 'a_faturar' ? 'p-pag-fat' : 'p-pag-pend'}` }, [
+    el('span', { text: est === 'pago' ? 'Pago' : est === 'a_faturar' ? 'A faturar' : 'Pendente' }), el('span', { text: d.pagamento?.forma === 'cartao' ? 'Cartão' : est === 'a_faturar' ? 'Fatura' : 'PIX' })]);
+  const concluida = ['finalizado', 'avaliado'].includes(d.status);
+  const status = concluida
+    ? el('span', { class: 'p-st-concluida' }, [el('span', { text: rot }), d.nota ? el('span', { class: 'p-st-nota' }, [icone('estrela', { pequeno: true }), String(d.nota).replace('.', ',')]) : null])
+    : el('span', { class: `p-st p-st-${d.status}`, text: rot });
+  const prof = d.profissional ? el('span', { class: 'u-lin' }, [avatar(d.profissional.nome.split(' ')[0], { habilidades: d.profissional.habilidades, foto: d.profissional.foto }), zap(d.profissional.telefone, d.profissional.nome)])
     : selo('Sem profissional', 'urgente');
   const car = d.caracteristicas || {};
   return {
     rotulo: d.cliente.nome, dataset: { diaria: d.id },
     celulas: [el('span', { class: 'p-num p-forte', text: d.horaInicio || '' }),
-      el('span', { class: 'u-lin' }, [el('span', {}, [el('span', { class: 'p-forte', text: d.cliente.nome }), el('span', { class: 'p-linha2', text: d.local?.bairro || '' })]), zap(d.cliente.telefone, d.cliente.nome)]),
-      el('span', { class: 'u-lin-2 u-nowrap', title: nomeServico(d.servico) }, [icone(ICONE_SERVICO[d.servico] || 'casa', { titulo: nomeServico(d.servico) }), el('span', { class: 'p-num', text: `${(d.duracaoMinutos || 0) / 60}h` })]),
-      prof, el('span', { class: 'p-pilha' }, [status, pg])],
+      el('span', { class: 'u-lin p-dia-cliente' }, [el('span', {}, [el('span', { class: 'p-forte', text: d.cliente.nome }), el('span', { class: 'p-linha2 p-local' }, [icone('local', { pequeno: true }), d.local?.bairro || ''])]), zap(d.cliente.telefone, d.cliente.nome)]),
+      el('span', { class: `p-serv-ic p-serv-${d.servico || 'residencial'}`, title: nomeServico(d.servico) }, [icone(ICONE_SERVICO[d.servico] || 'casa', { titulo: nomeServico(d.servico) })]),
+      el('span', { class: 'p-num', text: `${String((d.duracaoMinutos || 0) / 60).replace('.', ',')}h` }),
+      prof, pg, status],
     detalhe: () => detalhe([
       ['Endereço', [[d.local?.logradouro, d.local?.numero].filter(Boolean).join(', '), d.local?.complemento, d.local?.bairro, d.local?.cidade].filter(Boolean).join(' · '), true],
       ['Ponto de referência', d.local?.pontoReferencia || ''],
@@ -346,6 +381,14 @@ export function linhaDiaria(d) {
 
 // ---------------------------------------------------------------- itens de "Precisa de você"
 
+/** Ícone e tom de cada pendência (imagem 05: ícone num quadrado tingido à esquerda). */
+const ICONE_PENDENCIA = {
+  sem_profissional: ['alerta', 'ouro'], substituicao: ['troca', 'ouro'], recusa_profissional: ['calendario_x', 'ouro'], sem_resposta: ['relogio', 'ouro'],
+  falha_envio_escala: ['alerta', 'ouro'], conflito_fixa: ['alerta', 'ouro'], standby_decisao: ['relogio', 'ouro'], pagamento_verificacao: ['dolar', 'ouro'],
+  pagamento_informado: ['dolar', 'ouro'], pagamento_vencido: ['dolar', 'ouro'], adiantamento: ['dinheiro_mao', 'ouro'], reembolso_transporte: ['taxi', 'ouro'],
+  hora_extra: ['relogio', 'ouro'], pacote_endereco_novo: ['documento', 'info'], cadastro_profissional: ['usuario', 'info'], documento_vencido: ['documento', 'ouro'],
+  ocorrencia: ['alerta', 'ouro'], falha_automacao: ['robo', 'ouro'],
+};
 function itemPendencia(x, { hoje, recarregar, motivos }) {
   const r = ['pendencias', 'diariasHoje', 'diariasAmanha', 'standby', 'solicitacoes'];
   const ok = (rotulo, fn, sucesso) => botao('Aprovar', { ic: 'check', soIcone: true, rotulo: `${rotulo}: aprovar`, acao: fn, sucesso, aoSucesso: () => recarregar(...r) });
@@ -388,8 +431,11 @@ function itemPendencia(x, { hoje, recarregar, motivos }) {
       acoes = [botao('Reprocessar', { acao: (k) => api.acaoExecucao(x.ref.execucaoId, 'reenviar', { chave: k }), sucesso: 'Mensagem enviada de novo pra fila.', aoSucesso: () => recarregar('pendencias') })]; break;
     default: acoes = [];
   }
-  return el('li', { class: x.urgente ? 'urgente' : null, dataset: { pendencia: x.id, tipo: x.tipo } }, [
-    el('span', { class: 'p-texto-item' }, [el('b', {}, [x.urgente ? el('span', { class: 'p-sr', text: 'Urgente: ' }) : null, x.titulo]), el('span', { text: x.sub || '' })]),
+  const urg = urgenteNaTela(x);
+  const [ic, tomIc] = ICONE_PENDENCIA[x.tipo] || ['alerta', 'ouro'];
+  return el('li', { class: urg ? 'urgente' : PAGAMENTO_SEM_URGENCIA.has(x.tipo) ? 'atencao' : null, dataset: { pendencia: x.id, tipo: x.tipo } }, [
+    el('span', { class: `p-ic-item p-pend-ic p-tom-${urg ? 'erro' : tomIc}`, 'aria-hidden': 'true' }, [icone(ic, { pequeno: true })]),
+    el('span', { class: 'p-texto-item' }, [el('b', {}, [urg ? el('span', { class: 'p-sr', text: 'Urgente: ' }) : null, x.titulo]), el('span', { text: x.sub || '' })]),
     el('span', { class: 'p-acoes-item' }, acoes),
   ]);
 }
@@ -407,7 +453,7 @@ function darPrazo(x, hoje, depois) {
 // ---------------------------------------------------------------- stand-by
 function itemStandby(s, { hoje, recarregar }) {
   const turnos = (s.turnos || []).map((t) => ({ manha: '08h-12h', tarde: '13h-18h', integral: '08h-18h' }[t] || t)).join(', ');
-  const confirmar2 = botao('Confirmar', { rotulo: `Confirmar ${s.nome}`, aoClicar: async () => {
+  const confirmar2 = botao('Confirmar', { ic: 'check', rotulo: `Confirmar ${s.nome}`, aoClicar: async () => {
     const pend = (await api.painelPendencias()).itens.filter((p) => p.tipo === 'sem_profissional' && p.ref.data === hoje);
     const corpo = el('div', { class: 'u-col-2' }, [
       el('p', { class: 'p-sec', text: pend.length ? `Designar ${primeiro(s.nome)} numa diária de hoje sem profissional:` : `Nenhuma diária de hoje sem profissional. Confirmar deixa ${primeiro(s.nome)} de prontidão.` }),
@@ -419,9 +465,9 @@ function itemStandby(s, { hoje, recarregar }) {
       pend.length ? null : botao('Confirmar prontidão', { tom: 'primario', acao: () => api.decidirStandby(s.diaristaId, hoje, 'confirmada', null), sucesso: 'Stand-by confirmado.', aoSucesso: () => { fechar(); recarregar('standby'); } }),
     ].filter(Boolean) });
   } });
-  const liberar = botao('Liberar', { rotulo: `Liberar ${s.nome}`, acao: () => api.decidirStandby(s.diaristaId, hoje, 'liberada', null), sucesso: `${primeiro(s.nome)} liberada hoje.`, aoSucesso: () => recarregar('standby') });
+  const liberar = botao('Liberar', { ic: 'fechar', rotulo: `Liberar ${s.nome}`, acao: () => api.decidirStandby(s.diaristaId, hoje, 'liberada', null), sucesso: `${primeiro(s.nome)} liberada hoje.`, aoSucesso: () => recarregar('standby') });
   return el('li', { class: 'p-standby', dataset: { standby: s.diaristaId } }, [
-    el('span', { class: 'u-lin-2 p-standby-pessoa' }, [avatar(s.nome, { habilidades: s.habilidades, linha2: [turnos, (s.regioes || [])[0]].filter(Boolean).join(' · ') }), zap(s.telefone, s.nome)]),
+    el('span', { class: 'u-lin-2 p-standby-pessoa' }, [avatar(s.nome, { foto: s.foto, habilidades: s.habilidades, linha2: [turnos, (s.regioes || [])[0]].filter(Boolean).join(' · ') }), zap(s.telefone, s.nome)]),
     s.estado === 'confirmada' ? selo('Confirmada', 'ok') : null, el('span', { class: 'p-acoes-item' }, [confirmar2, liberar])]);
 }
 
@@ -431,24 +477,35 @@ function blocoMeta(r) {
   const feito = m.realizadas + m.agendadas;
   const pct = m.meta ? (feito / m.meta) * 100 : 0;
   const mes = new Date(`${r.mes}-15T12:00:00Z`).toLocaleDateString('pt-BR', { month: 'long', timeZone: 'UTC' });
+  const mesAnt = MESES[(Number(r.mes.slice(5, 7)) + 10) % 12];
   return {
-    sub: `${feito} de ${m.meta} (${Math.round(pct)}%) · meta: +${String(m.percentual).replace('.', ',')}% sobre o mês anterior (${mes})`,
-    // número grande + rótulo + comparação com base explícita (meta do mês e mês anterior), sem anel decorativo
-    conteudo: el('div', { class: 'p-meta-info' }, [
-      el('div', { class: 'p-metrica-grande' }, [el('span', { class: 'p-metrica-numero', text: String(feito) }), el('span', { class: 'p-sec', text: `de ${m.meta} da meta · ${Math.round(pct)}%` })]),
-      el('div', { class: 'p-barra', role: 'img', 'aria-label': `${Math.round(pct)}% da meta` }, [el('i', { style: `width:${Math.min(100, Math.round(pct))}%` })]),
-      el('dl', { class: 'p-numeros' }, [['Realizadas', m.realizadas], ['Agendadas', m.agendadas], ['Mês anterior', m.mesAnterior]].map(([k, v]) => el('div', {}, [el('dt', { text: k }), el('dd', { text: String(v) })]))),
-      el('p', { class: 'p-sec', text: m.meta === 0 ? 'Sem diárias no mês anterior: a meta começa no próximo mês.' : m.faltam ? `${m.faltam === 1 ? 'Falta 1 diária' : `Faltam ${m.faltam} diárias`} pra atingir a meta.` : 'Meta atingida com as realizadas e agendadas.' }),
+    sub: `${feito} de ${m.meta} (${Math.round(pct)}%) em ${mes} · meta: +${String(m.percentual).replace('.', ',')}% sobre o mês anterior (${mesAnt})`,
+    // anel + os quatro números + barra, como na imagem 05 (o mesmo desenho da vista inicio-vista.js)
+    conteudo: el('div', { class: 'pn-meta p-ini-meta' }, [
+      el('div', { class: 'pn-anel-caixa', role: 'img', 'aria-label': `${Math.round(pct)}% da meta` }, [anel(pct), el('span', { class: 'pn-anel-n' }, [el('b', { text: `${Math.round(pct)}%` }), el('small', { text: 'da meta' })])]),
+      el('div', { class: 'pn-meta-dir' }, [
+        el('dl', { class: 'pn-meta-n' }, [[[el('span', { class: 'p-sr', text: 'Mês anterior: ' }), maiuscula(mesAnt)], m.mesAnterior], ['Meta', m.meta], ['Realizadas', m.realizadas], ['Agendadas', m.agendadas]]
+          .map(([k, v]) => el('div', {}, [el('dt', {}, Array.isArray(k) ? k : [k]), el('dd', { text: String(v) })]))),
+        el('div', { class: 'pn-meta-barra', 'aria-hidden': 'true' }, [el('span', { style: `width:${Math.min(100, Math.round(pct))}%` })]),
+        el('p', { class: 'pn-meta-falta' }, [el('span', { class: 'p-ini-coroa-p', 'aria-hidden': 'true' }, [icone('coroa_c', { pequeno: true })]),
+          m.meta === 0 ? 'Sem diárias no mês anterior: a meta começa no próximo mês.' : m.faltam ? `${m.faltam === 1 ? 'Falta 1 diária' : `Faltam ${m.faltam} diárias`} para atingir a meta.` : 'Meta atingida com as realizadas e agendadas.']),
+      ]),
     ]),
   };
 }
 
 function blocoMotivos(r) {
   const total = r.cancelamentos.reduce((s, x) => s + x.total, 0);
-  // barras com a legenda junto do dado (lê sem depender de cor), no lugar da rosca de 5 cores
+  // rosca com o total no meio e a legenda em tabela (número e porcentagem junto de cada cor), como na imagem 05
+  const itens = r.cancelamentos.slice(0, 5);
   return { sub: total ? `Este mês · ${total} ${total === 1 ? 'diária cancelada' : 'diárias canceladas'}` : 'Este mês',
-    conteudo: total ? barras(r.cancelamentos.map((x) => ({ rotulo: x.rotulo, valor: x.total })), { rotuloColuna: 'Motivos de cancelamento' })
-      : vazio('Nenhuma diária cancelada este mês.') };
+    conteudo: total ? el('div', { class: 'pn-graf p-ini-graf' }, [
+      el('div', { class: 'pn-rosca-caixa' }, [rosca(itens.map((x) => [x.rotulo, x.total])), el('span', { class: 'pn-anel-n' }, [el('b', { text: String(total) }), el('small', { text: total === 1 ? 'diária' : 'diárias' })])]),
+      el('table', { class: 'pn-legenda' }, [el('caption', { class: 'p-sr', text: 'Motivos de cancelamento no mês' }), el('tbody', {}, itens.map((x, i) => el('tr', {}, [
+        el('th', { scope: 'row', title: x.rotulo }, [el('span', { class: 'pn-leg-ponto', style: `background:${COR_G[i % COR_G.length]}` }), x.rotulo.split(' (')[0]]),
+        el('td', { text: `${Math.round((x.total / total) * 100)}%`, title: `${x.total} ${x.total === 1 ? 'diária' : 'diárias'}` }),
+      ])))]),
+    ]) : vazio('Nenhuma diária cancelada este mês.') };
 }
 
 function blocoRegioes(r) {
@@ -468,6 +525,6 @@ function blocoRegioes(r) {
   btC.addEventListener('click', () => { modo = 'cidades'; desenhar(); });
   btB.addEventListener('click', () => { modo = 'bairros'; desenhar(); });
   desenhar();
-  return { extra: [alt], conteudo: caixa };
+  return { conteudo: el('div', {}, [el('div', { class: 'p-ini-regioes-alt' }, [alt]), caixa]) };
 }
 

@@ -3,12 +3,12 @@
    faixa da semana + resumo; busca, Filtros e envio; Stand-by; tabela por cidade; detalhes num painel à direita. */
 
 /* ---------- casca compacta (menu recolhido, só ícones) */
-.p-casca-compacta .p-menu-col{background:var(--cor-escuro);border-right:0}
-.p-casca-compacta .p-menu-item{color:var(--cor-escuro-texto-2)}
-.p-casca-compacta .p-menu-item:hover{background:var(--marinho-600);color:var(--cor-escuro-texto)}
+.p-casca-compacta .p-menu-col{background:var(--pn-menu);border-right:0}
+.p-casca-compacta .p-menu-item{color:var(--pn-menu-texto)}
+.p-casca-compacta .p-menu-item:hover{background:var(--pn-menu-hover);color:var(--pn-menu-texto)}
 .p-casca-compacta .p-menu-item[aria-current="page"]{background:var(--neutro-0);color:var(--cor-titulo)}
-.p-casca-compacta .p-marca{color:var(--cor-escuro-texto)}
-.p-casca-compacta .p-marca small{color:var(--cor-escuro-texto-2)}
+.p-casca-compacta .p-marca{color:var(--pn-menu-texto)}
+.p-casca-compacta .p-marca small{color:var(--pn-menu-texto-2)}
 .p-casca-compacta .p-menu-rodape{border-top-color:var(--marinho-600)}
 .p-casca-compacta .p-submenu .p-menu-item{color:var(--cor-escuro-texto-2)}
 .p-menu-alternar{justify-content:center;border:1px solid var(--marinho-500)}
@@ -49,7 +49,7 @@
 
 /* ---------- área (agenda + painel lateral) */
 .ae-area{display:grid;grid-template-columns:minmax(0,1fr);gap:var(--e-4);align-items:start}
-.ae-com-detalhe .ae-area{grid-template-columns:minmax(0,1fr) 440px}
+.ae-com-detalhe .ae-area{grid-template-columns:minmax(0,1fr) 400px}
 .ae-principal{min-width:0;display:flex;flex-direction:column;gap:var(--e-3)}
 .ae-corpo{display:flex;flex-direction:column;gap:var(--e-3)}
 
@@ -259,26 +259,46 @@
 .ae-det-rodape{display:flex;align-items:center;gap:var(--e-2);flex-wrap:wrap;padding:var(--e-3) var(--e-4);border-top:var(--borda)}
 .ae-det-rodape .btn-primario{margin-left:auto}
 
-/* ---------- painel de detalhes aberto (imagem 2): a agenda encolhe; resumo, "Enviar selecionadas", Alterar e X da
-   linha saem (ficam no painel); a tabela rola por dentro se ainda faltar espaço, nunca a página */
-.ae-com-detalhe .ae-resumo,.ae-com-detalhe .ae-enviar-sel,.ae-com-detalhe .ae-sep,.ae-com-detalhe .ae-prof-acoes .ae-alterar,.ae-com-detalhe .ae-prof-acoes .ae-remover{display:none}
+/* ---------- painel de detalhes aberto (imagem 04): a agenda encolhe e a linha continua inteira. Saem só o resumo e
+   "Enviar selecionadas" (como na imagem). Alterar, X, aviãozinho, Revisar ou Enviar e os três pontinhos ficam na linha
+   (spec, seção 13: o detalhe não é obrigatório pra ação simples). Pra caber, cada texto fica numa linha só, com
+   reticências e o texto inteiro no title: endereço em até 3 linhas (rua, bairro e cidade, imóvel), nunca as 4 ou 5 de
+   antes; o serviço mostra o ícone e as horas (o nome fica no ícone e no detalhe). A tabela nunca rola de lado. */
+.ae-com-detalhe .ae-resumo,.ae-com-detalhe .ae-enviar-sel,.ae-com-detalhe .ae-sep{display:none}
 .ae-com-detalhe .ae-topo-dia{grid-template-columns:minmax(0,1fr)}
-.ae-com-detalhe .ae-tabela-wrap{overflow-x:auto}
-.ae-com-detalhe .ae-end{min-width:180px}
-.ae-com-detalhe .ae-btn-acao{min-width:84px}
+.ae-com-detalhe .ae-tabela{font-size:var(--fs-12)}
+.ae-com-detalhe .ae-tabela td,.ae-com-detalhe .ae-tabela thead th{padding-left:var(--e-1);padding-right:var(--e-1)}
+.ae-com-detalhe .ae-c-check{width:32px}
+.ae-com-detalhe .ae-hora{font-size:var(--fs-14)}
+.ae-com-detalhe .ae-cliente{max-width:118px}
+.ae-com-detalhe .ae-cliente .ae-nome-linha{flex-wrap:nowrap;min-width:0}
+.ae-com-detalhe .ae-cliente .ae-nome,.ae-com-detalhe .ae-prof-txt .ae-nome{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ae-com-detalhe .ae-prof-txt .ae-nome{max-width:86px}
+.ae-com-detalhe .ae-tabela .ae-balao{max-width:100%;overflow:hidden;white-space:nowrap}
+/* o balão fica só com o ícone (o nome acessível "Mensagens e contato de ..." continua no botão) */
+.ae-com-detalhe .ae-tabela .ae-balao span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
+.ae-com-detalhe .ae-c-hora{width:52px}
+.ae-com-detalhe .ae-end{width:136px;min-width:0;padding-right:var(--e-4)}
+.ae-com-detalhe .ae-end > span:not(.ae-animais){display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ae-com-detalhe .ae-tabela .ae-end > span:first-child{font-size:var(--fs-12)}
+.ae-com-detalhe .ae-serv-nome{display:none}
+.ae-com-detalhe .ae-servico{gap:var(--e-1)}
+.ae-com-detalhe .ae-servico .ae-linha2{white-space:nowrap}
+.ae-com-detalhe .ae-prof{gap:var(--e-1)}
+.ae-com-detalhe .ae-lin .ae-avatar,.ae-com-detalhe .ae-lin .ae-foto{width:30px;height:30px;font-size:var(--fs-12)}
+.ae-com-detalhe .ae-prof-acoes{margin-left:auto;gap:0}
+.ae-com-detalhe .ae-aviao{width:30px;height:30px}
+.ae-com-detalhe .ae-alterar{min-height:28px;padding:0 var(--e-2);font-size:var(--fs-12)}
+.ae-com-detalhe .ae-remover{width:26px;height:28px}
+.ae-com-detalhe .ae-selecionar{padding:0 var(--e-2);font-size:var(--fs-12)}
+.ae-com-detalhe .ae-pag-selo{padding:0 var(--e-1)}
+.ae-com-detalhe .ae-status{padding:0 var(--e-2);white-space:nowrap}
+.ae-com-detalhe .ae-status svg,.ae-com-detalhe .ae-btn-acao svg{display:none}
+.ae-com-detalhe .ae-acoes{gap:var(--e-1)}
+.ae-com-detalhe .ae-btn-acao{min-width:66px;padding:0 var(--e-2);font-size:var(--fs-12)}
+.ae-com-detalhe .ae-mais{width:30px;height:30px}
 .ae-com-detalhe .ae-sb-linha{grid-template-columns:48px minmax(0,1.3fr) minmax(0,.8fr) minmax(0,.7fr) minmax(0,1.6fr);row-gap:var(--e-2)}
 .ae-com-detalhe .ae-sb-acoes{grid-column:1/-1;justify-self:end}
-.ae-com-detalhe .ae-end{min-width:140px}
-.ae-com-detalhe .ae-prof-acoes{margin-left:0}
-.ae-com-detalhe .ae-selecionar,.ae-com-detalhe .ae-btn-acao svg,.ae-com-detalhe .ae-status svg{display:none}
-.ae-com-detalhe .ae-btn-acao{padding:0 var(--e-2)}
-.ae-com-detalhe .ae-lin .ae-avatar{width:32px;height:32px;font-size:var(--fs-12)}
-.ae-com-detalhe .ae-balao{font-size:var(--fs-12)}
-.ae-com-detalhe .ae-mais{width:32px;height:32px}
-.ae-com-detalhe .ae-tabela{font-size:var(--fs-12)}
-.ae-com-detalhe .ae-tabela td,.ae-com-detalhe .ae-tabela thead th{padding-left:1px;padding-right:1px}
-.ae-com-detalhe .ae-status{padding:0 var(--e-2)}
-.ae-com-detalhe .ae-btn-acao{min-width:72px}
 
 /* ---------- telas médias: a tabela cabe com o painel aberto */
 @media (max-width:1599px){
@@ -292,7 +312,13 @@
 }
 @media (max-width:1499px){
   .ae-sb-linha{grid-template-columns:56px minmax(180px,1.4fr) minmax(110px,1fr) minmax(90px,.7fr) minmax(0,1.4fr) auto}
-  .ae-com-detalhe .ae-area{grid-template-columns:minmax(0,1fr) 380px}
+  .ae-com-detalhe .ae-area{grid-template-columns:minmax(0,1fr) 340px}
+  .ae-com-detalhe .ae-lin .ae-nota{display:none}
+  .ae-com-detalhe .ae-cliente{max-width:96px}
+  .ae-com-detalhe .ae-end{width:112px}
+  .ae-com-detalhe .ae-btn-acao{min-width:58px}
+  .ae-com-detalhe .ae-prof-txt .ae-nome{max-width:74px}
+  .ae-com-detalhe .ae-origem{padding:0 var(--e-1)}
 }
 @media (max-width:1279px){
   .ae-topo-dia{grid-template-columns:minmax(0,1fr)}
@@ -300,12 +326,20 @@
   .ae-sb-info,.ae-sb-alerta{grid-column:2/4}
 }
 
+/* ---------- notebook pequeno (1100 a 1365): o detalhe abre por cima, como gaveta à direita, e a agenda fica inteira
+   embaixo (encolher mais que isso cortaria as ações da linha) */
+@media (min-width:1100px) and (max-width:1365px){
+  .ae-com-detalhe .ae-area{grid-template-columns:minmax(0,1fr)}
+  .ae-detalhe{position:fixed;top:0;right:0;bottom:0;width:380px;max-height:none;z-index:61;border-radius:0}
+}
+
 /* ---------- celular: cartões, nada cortado em 320 */
 @media (max-width:1099px){
   .ae-com-detalhe .ae-area{grid-template-columns:minmax(0,1fr)}
   .ae-detalhe{position:fixed;inset:0;z-index:61;max-height:none;border-radius:0}
 }
-@media (max-width:899px){
+/* cartões até 1279 px (rodada 5 das bancas: de 900 a 1279 a tabela escondia Status e Ação); antes valia só até 899 */
+@media (max-width:1279px){
   .ae-tabela thead{display:none}
   .ae-tabela,.ae-tabela tbody,.ae-tabela tr,.ae-tabela td,.ae-tabela th{display:block;width:auto}
   .ae-tabela-wrap{border:0;background:none;overflow:visible}
@@ -353,6 +387,9 @@
   .ae-sb-info,.ae-sb-alerta{grid-column:auto}
   .ae-sb-acoes{flex-wrap:wrap}
   .ae-sb-acoes .btn{flex:1;min-width:0}
+  /* alvo de toque de 44 px e busca com 16 px (o iPhone não dá zoom) */
+  .ae-vista,.ae-hoje,.ae-nav-btn,.ae-filtros-btn,.ae-barra .btn,.ae-link,.ae-balao{min-height:var(--alvo)}
+  .ae-busca input{font-size:var(--fs-16)}
   .ae-btn-acao{flex:1;min-width:0}
   .ae-pop.ae-pop-folha{position:fixed;left:0;right:0;bottom:0;top:auto;width:auto;max-height:85vh;border-radius:var(--r-cartao) var(--r-cartao) 0 0}
   .ae-chips-3,.ae-filtros-2{grid-template-columns:minmax(0,1fr)}
@@ -364,3 +401,267 @@
   .ae-det-rodape .btn-primario{flex:1 1 100%}
 }
 @media (prefers-reduced-motion:reduce){.ae-pop{scroll-behavior:auto}}
+
+/* ================================================================ pele das imagens da cliente (17/11/2026)
+   A Isa pediu o layout "100 por cento igual" às imagens 01 a 04 ("a gente sentiu falta das cores, achamos mais intuitivo").
+   Cores medidas nas imagens (painel-tokens.css, seção Agenda e Escala); fontes do painel (Merriweather nos títulos, IBM Plex
+   Sans Condensed no resto, as mesmas do Início). Só cor, fonte e ícone cheio: estrutura e regras de cima continuam valendo. */
+.p-conteudo.ae-conteudo{background:var(--pn-ae-pagina);font-family:var(--pn-sans);color:var(--pn-texto)}
+.ae-pop,.ae-detalhe{font-family:var(--pn-sans)}
+.ae-conteudo .btn,.ae-pop .btn,.ae-detalhe .btn{font-family:var(--pn-sans)}
+.ae-conteudo .btn-primario,.ae-pop .btn-primario,.ae-detalhe .btn-primario{background:var(--pn-ae-titulo);border-color:var(--pn-ae-titulo);color:var(--pn-branco)}
+.ae-conteudo .btn-primario:hover,.ae-pop .btn-primario:hover,.ae-detalhe .btn-primario:hover{background:var(--pn-ae-titulo-hover);border-color:var(--pn-ae-titulo-hover)}
+.ae-conteudo .btn-secundario,.ae-pop .btn-secundario,.ae-detalhe .btn-secundario{border-color:var(--pn-ae-borda-btn);color:var(--pn-ae-azul)}
+.ae-conteudo .btn-secundario:hover,.ae-pop .btn-secundario:hover,.ae-detalhe .btn-secundario:hover{border-color:var(--pn-ae-azul);background:var(--pn-ae-hover)}
+
+/* menu recolhido: azul-noite, item da tela em claro com o calendário vermelho (imagem 01) */
+.p-casca-compacta .p-menu-item[aria-current="page"]{background:var(--pn-ae-cal-fundo);color:var(--pn-ae-cal)}
+
+/* cabeçalho */
+.ae-titulo-ic{width:40px;height:40px;background:none;color:var(--pn-ae-cal)}
+.ae-titulo-ic svg{width:34px;height:34px}
+.ae-titulo h1{font-family:var(--pn-serif);font-weight:var(--pn-p7);color:var(--pn-ae-titulo)}
+.ae-titulo p{font-family:var(--pn-serif);font-weight:var(--pn-p7);color:var(--pn-ae-azul)}
+.ae-vistas,.ae-datas,.ae-hoje{border-color:var(--pn-ae-borda-btn)}
+.ae-vista{border-right-color:var(--pn-ae-borda-btn);color:var(--pn-ae-azul);font-weight:var(--pn-p5)}
+.ae-vista[aria-pressed="true"]{background:var(--pn-ae-titulo);color:var(--pn-branco)}
+.ae-data-rot,.ae-nav-btn,.ae-hoje{color:var(--pn-ae-azul)}
+.ae-data-rot,.ae-hoje{font-weight:var(--pn-p5)}
+.ae-cal-btn{border-left-color:var(--pn-ae-borda-btn)}
+.ae-nav-btn:hover,.ae-icone-btn:hover{background:var(--pn-ae-hover)}
+.ae-canal{background:var(--pn-ae-zap);color:var(--pn-ae-zap-texto)}
+.ae-canal svg{color:var(--pn-zap)}
+.ae-cab-conta .p-icone-btn{color:var(--pn-ae-azul)}
+.ae-cab-conta .p-usuario strong{color:var(--pn-ae-titulo)}
+.ae-cab-conta .p-usuario small{color:var(--pn-ae-azul-2)}
+
+/* faixa da semana e resumo */
+.ae-dia{background:var(--pn-ae-dia);color:var(--pn-ae-azul)}
+.ae-dia small{color:var(--pn-ae-azul-2)}
+.ae-dia[aria-current="date"]{background:var(--pn-ae-titulo);color:var(--pn-branco);box-shadow:var(--pn-ae-sombra)}
+.ae-dia[aria-current="date"] small{color:var(--pn-menu-texto)}
+.ae-nav-sem{color:var(--pn-ae-azul)}
+.ae-resumo{border-color:var(--pn-ae-linha);box-shadow:var(--pn-ae-sombra)}
+.ae-res-total{color:var(--pn-ae-azul)}
+.ae-res-total svg{color:var(--pn-ae-cal)}
+.ae-res-total span{color:var(--pn-ae-azul-2)}
+.ae-res svg{fill:currentColor;stroke:var(--pn-branco)}
+.ae-res svg[data-icone=ampulheta],.ae-res svg[data-icone=pessoa],.ae-res svg[data-icone=profissionais]{fill:none;stroke:currentColor}
+.ae-res-atencao{background:var(--pn-ae-aten);color:var(--pn-ae-aten-texto)}
+.ae-res-atencao svg{color:var(--pn-ae-aten-ic)}
+.ae-res-ok{background:var(--pn-ae-ok);color:var(--pn-ae-ok-texto)}
+.ae-res-ok svg{color:var(--pn-ae-ok-ic)}
+.ae-res-info{background:var(--pn-ae-info);color:var(--pn-ae-info-texto)}
+.ae-res-info svg{color:var(--pn-ae-info-ic)}
+.ae-res-erro{background:var(--pn-ae-pend);color:var(--pn-ae-pend-texto)}
+.ae-res-erro svg{color:var(--pn-ae-pend-ic)}
+.ae-res-standby{background:var(--pn-ae-roxo);color:var(--pn-ae-roxo-texto)}
+.ae-res-standby svg{color:var(--pn-ae-roxo-ic)}
+
+/* busca, filtros e envio */
+.ae-busca{border-color:var(--pn-ae-linha);color:var(--pn-ae-azul)}
+.ae-busca input{color:var(--pn-texto)}
+.ae-busca input::placeholder{color:var(--pn-ae-azul-2)}
+.ae-filtros-btn{border-color:var(--pn-ae-filtro);background:var(--pn-ae-filtro);color:var(--pn-ae-filtro-texto)}
+.ae-filtros-btn svg{color:var(--pn-ae-filtro-ic)}
+.ae-cont{background:var(--pn-ae-decisao);color:var(--pn-ae-decisao-texto)}
+.ae-sep{background:var(--pn-ae-borda-btn)}
+
+/* stand-by */
+.ae-standby{border-color:var(--pn-ae-standby-borda);background:var(--pn-ae-standby)}
+.ae-sb-cab{color:var(--pn-ae-titulo)}
+.ae-sb-cab svg{color:var(--pn-ae-filtro-ic)}
+.ae-sb-cab h2{font-family:var(--pn-sans);font-weight:var(--pn-p6);color:var(--pn-ae-titulo);white-space:nowrap}
+.ae-decisao{background:var(--pn-ae-decisao);color:var(--pn-ae-decisao-texto)}
+.ae-sb-linha{border-top-color:var(--pn-ae-standby-borda)}
+.ae-sb-info{color:var(--pn-ae-azul-2)}
+.ae-sb-info small{color:var(--pn-ae-cinza)}
+.ae-sb-alerta-vence{background:var(--pn-ae-aten);color:var(--pn-ae-aten-texto)}
+.ae-sb-alerta-vence svg{color:var(--pn-ae-aten-ic);fill:currentColor;stroke:var(--pn-branco)}
+.ae-link{color:var(--pn-ae-azul)}
+
+/* tabela */
+.ae-tabela-wrap{border-color:var(--pn-ae-linha);box-shadow:var(--pn-ae-sombra)}
+.ae-tabela thead th{background:var(--pn-ae-cab);color:var(--pn-ae-titulo);border-bottom-color:var(--pn-ae-linha);font-weight:var(--pn-p6)}
+.ae-tabela td{border-bottom-color:var(--pn-ae-linha)}
+.ae-grupo th{background:var(--pn-ae-grupo);color:var(--pn-ae-azul-2);border-bottom-color:var(--pn-ae-linha)}
+tbody[data-cidade="Belo Horizonte"] .ae-grupo th{background:var(--pn-ae-grupo-bh)}
+.ae-grupo th svg{color:var(--pn-ae-alfinete);fill:currentColor;stroke:var(--pn-branco)}
+.ae-grupo th b{font-family:var(--pn-sans);font-weight:var(--pn-p6);color:var(--pn-ae-titulo)}
+.ae-lin:hover td{background:var(--pn-ae-hover)}
+.ae-lin.ae-lin-aberta td{background:var(--pn-ae-aberta)}
+.ae-hora{color:var(--pn-ae-azul);font-weight:var(--pn-p6)}
+.ae-nome{color:var(--pn-ae-azul);font-weight:var(--pn-p6)}
+.ae-coroa{color:var(--pn-ouro-detalhe)}
+.ae-coroa svg{fill:currentColor}
+.ae-pacote{color:var(--pn-ae-azul)}
+.ae-balao{color:var(--pn-ae-azul-2)}
+.ae-balao svg{color:var(--pn-ae-azul)}
+.ae-end{color:var(--pn-ae-endereco)}
+.ae-end .ae-linha2{color:var(--pn-ae-endereco)}
+.ae-linha2{color:var(--pn-ae-cinza)}
+.ae-animais{color:var(--pn-ae-cinza)}
+.ae-serv-casa{color:var(--pn-ae-casa)}
+.ae-serv-predio{color:var(--pn-ae-predio)}
+.ae-serv-ic svg{width:22px;height:22px}
+.ae-serv-ic svg[data-icone=casa],.ae-serv-ic svg[data-icone=predio]{fill:currentColor;stroke:var(--pn-branco)}
+.ae-serv-ic svg[data-icone=festa]{color:var(--pn-festa)}
+.ae-serv-nome{color:var(--pn-ae-azul-2)}
+.ae-servico .ae-linha2{color:var(--pn-ae-horas)}
+
+/* profissional: foto (iniciais só sem foto), avaliação, origem colorida, aviãozinho */
+.ae-avatar{background:var(--pn-ae-info);color:var(--pn-ae-titulo)}
+.ae-avatar-vazio{background:var(--pn-ae-dia);color:var(--pn-ae-cinza)}
+.ae-foto{flex:none;width:36px;height:36px;border-radius:var(--r-pilula);object-fit:cover;background:var(--pn-ae-dia);box-shadow:var(--pn-anel-avatar)}
+.ae-foto.ae-avatar-g{width:56px;height:56px}
+.ae-nota{color:var(--pn-ae-cinza)}
+.ae-nota svg{color:var(--pn-amarelo);fill:var(--pn-amarelo)}
+.ae-origem{font-weight:var(--pn-p5)}
+.ae-origem-fixa{background:var(--pn-ae-ok);color:var(--pn-ae-ok-texto)}
+.ae-origem-fixa svg{color:var(--pn-ae-ok-ic)}
+.ae-origem-sugerida{background:var(--pn-ae-sugerida);color:var(--pn-ae-info-texto)}
+.ae-origem-sugerida svg{color:var(--pn-ae-sol);fill:currentColor}
+.ae-origem-manual{background:var(--pn-ae-dia);color:var(--pn-ae-cinza)}
+.ae-aviao,.ae-remover{color:var(--pn-ae-azul)}
+.ae-mais{border-color:var(--pn-ae-borda-btn);color:var(--pn-ae-azul)}
+.ae-sem-prof b{color:var(--pn-ae-cinza);font-weight:var(--pn-p5)}
+.ae-obrig{color:var(--pn-ae-pend-texto)}
+
+/* pagamento e status: selo claro com o ícone cheio na cor do estado (imagens 01 e 02) */
+.ae-pag-selo{font-weight:var(--pn-p5)}
+.ae-pag-selo svg,.ae-status svg{fill:currentColor;stroke:var(--pn-branco)}
+.ae-pago{background:var(--pn-ae-ok);color:var(--pn-ae-ok-texto)}
+.ae-pago svg{color:var(--pn-ae-ok-ic)}
+.ae-pendente{background:var(--pn-ae-pend);color:var(--pn-ae-pend-texto)}
+.ae-pendente svg{color:var(--pn-ae-pend-ic)}
+.ae-faturar{background:var(--pn-ae-info);color:var(--pn-ae-info-texto)}
+.ae-faturar svg{color:var(--pn-ae-info-ic)}
+.ae-status{min-height:28px;border-color:transparent;font-weight:var(--pn-p5)}
+.ae-status.selo-sucesso{background:var(--pn-ae-ok);color:var(--pn-ae-ok-texto)}
+.ae-status.selo-sucesso svg{color:var(--pn-ae-ok-ic)}
+.ae-status[data-status="revisada"] svg{fill:none;stroke:currentColor}
+.ae-status.selo-atencao{background:var(--pn-ae-aten);color:var(--pn-ae-aten-texto)}
+.ae-status.selo-atencao svg{color:var(--pn-ae-aten-ic)}
+.ae-status.selo-info{background:var(--pn-ae-info);color:var(--pn-ae-info-texto)}
+.ae-status.selo-info svg{color:var(--pn-ae-info-ic)}
+.ae-status[data-status="aguardando_aceite"] svg,.ae-status[data-status="enviada"] svg,.ae-status[data-status="aguardando_envio"] svg{fill:none;stroke:currentColor}
+.ae-status.selo-erro{background:var(--pn-ae-pend);color:var(--pn-ae-pend-texto)}
+.ae-status.selo-erro svg{color:var(--pn-ae-pend-ic)}
+.ae-alerta-resp{color:var(--pn-ae-aten-ic)}
+
+/* Semana e Período */
+.ae-dia-cab{background:var(--pn-ae-cab);color:var(--pn-ae-azul-2)}
+.ae-dia-cab b{font-family:var(--pn-sans);font-weight:var(--pn-p6);color:var(--pn-ae-azul)}
+.ae-dia-cab small{color:var(--pn-ae-azul-2)}
+.ae-dia-cab svg{color:var(--pn-ae-azul)}
+
+/* popovers e menus (imagem 02) */
+.ae-pop{border-color:var(--pn-ae-linha);box-shadow:var(--pn-sombra-pop)}
+.ae-pop-cab{color:var(--pn-ae-titulo);border-bottom-color:var(--pn-ae-linha)}
+.ae-pop-cab h2{font-family:var(--pn-sans);font-weight:var(--pn-p6);color:var(--pn-ae-titulo)}
+.ae-pop-cab svg{color:var(--pn-ae-azul)}
+.ae-pop-corpo h3{color:var(--pn-ae-titulo)}
+.ae-chip{border-color:var(--pn-ae-borda-btn);color:var(--pn-ae-azul)}
+.ae-chip[aria-pressed="true"]{background:var(--pn-ae-titulo);border-color:var(--pn-ae-titulo);color:var(--pn-branco)}
+.ae-menu-item{color:var(--pn-ae-titulo)}
+.ae-menu-item:hover{background:var(--pn-ae-hover)}
+.ae-menu-ic{background:var(--pn-ae-info);color:var(--pn-ae-azul)}
+.ae-menu-txt span{color:var(--pn-ae-cinza)}
+.ae-perigo,.ae-perigo .ae-menu-txt span{color:var(--pn-ae-pend-texto)}
+.ae-perigo .ae-menu-ic{background:var(--pn-ae-pend-ic);color:var(--pn-branco)}
+.ae-hab{background:var(--pn-ae-sugerida);color:var(--pn-ae-info-texto)}
+.ae-disp{background:var(--pn-ae-ok);color:var(--pn-ae-ok-texto)}
+
+/* detalhe da diária (imagem 04): título em serifa, cada seção com a faixa clara e o ícone azul */
+.ae-detalhe{border-color:var(--pn-ae-linha);box-shadow:var(--pn-sombra-pop)}
+.ae-det-cab h2{font-family:var(--pn-serif);font-weight:var(--pn-p7);color:var(--pn-ae-titulo)}
+.ae-det-cab .ae-icone-btn{color:var(--pn-ae-azul)}
+.ae-det-meta{border-bottom-color:var(--pn-ae-linha)}
+.ae-det-num{color:var(--pn-ae-titulo)}
+.ae-det-num small{color:var(--pn-ae-cinza)}
+.ae-det-sec{border-bottom:0}
+.ae-det-sec-cab{padding:var(--e-1) var(--e-2);border-radius:var(--r-campo);background:var(--pn-ae-cab);color:var(--pn-ae-azul)}
+.ae-det-sec-cab svg{color:var(--pn-ae-titulo)}
+.ae-det-sec-cab h3{color:var(--pn-ae-azul);font-weight:var(--pn-p6)}
+.ae-det-sec .ae-nome-g{color:var(--pn-ae-azul)}
+.ae-det-dl dt,.ae-det-imovel{color:var(--pn-ae-cinza)}
+.ae-hist span{color:var(--pn-ae-cinza)}
+.ae-det-rodape{border-top-color:var(--pn-ae-linha)}
+.ae-pop select,.ae-pop input,.ae-detalhe select,.ae-detalhe input{font-family:var(--pn-sans)}
+
+/* ---------- rodada 2 das bancas (17/11/2026) */
+/* detalhe aberto: o painel inteiro cabe na tela (rodapé com "Salvar alterações" sempre à vista) e o rodapé vira grade */
+@media (min-width:1366px){.ae-com-detalhe .ae-detalhe{max-height:calc(100vh - 116px)}}
+.ae-det-rolagem{min-height:0}
+.ae-det-rodape{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;gap:var(--e-2)}
+.ae-det-rodape .btn{justify-content:center}
+.ae-det-rodape .btn-primario{grid-column:1/-1;margin-left:0}
+/* subtítulo em duas linhas equilibradas (sem "profissionais." sozinho) */
+.ae-titulo p{text-wrap:balance}
+/* ação sempre colada à direita da coluna, com ou sem Revisar/Enviar (linha sem profissional) */
+.ae-acoes{justify-content:flex-end}
+.ae-c-acao{text-align:right}
+/* casa cheia com contorno laranja escuro (porta e telhado legíveis) */
+.ae-serv-ic svg[data-icone=casa]{stroke:var(--pn-ae-casa-traco)}
+/* filtros: chips do tamanho do texto (nada quebra dentro do chip) e campos mais baixos, pra Limpar e Aplicar ficarem à vista */
+.ae-filtros .ae-chips-3{display:flex;flex-wrap:wrap}
+.ae-filtros .ae-chip{white-space:nowrap}
+.ae-filtros .campo select{min-height:36px}
+.ae-filtros{gap:var(--e-2)}
+/* notebook (1280 a 1439): a linha cabe sem cortar os três pontinhos; se ainda faltar, a tabela rola por dentro */
+.ae-tabela-wrap{overflow-x:auto}
+@media (max-width:1439px){
+  .ae-end{min-width:180px}
+  .ae-btn-acao{min-width:88px}
+  .ae-c-hora{width:56px}
+}
+@media (max-width:1365px){
+  .ae-end{min-width:150px}
+  .ae-serv-nome{display:none}
+  .ae-btn-acao{min-width:76px;padding:0 var(--e-2)}
+  .ae-prof-txt .ae-nome{max-width:96px;overflow:hidden;text-overflow:ellipsis}
+}
+@media (max-width:759px){
+  .ae-alterar,.ae-remover,.ae-aviao,.ae-mais{min-height:var(--alvo);min-width:var(--alvo)}
+  .ae-tabela-wrap{overflow:visible}
+}
+
+/* ---------- rodada 3 das bancas (17/11/2026) */
+/* endereço da linha: a rua numa linha só (o "301" não fica sozinho), o endereço inteiro no title */
+@media (max-width:1439px){.ae-end > span:first-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}.ae-end{max-width:210px}}
+@media (max-width:1365px){.ae-end{max-width:170px}}
+.ae-filtros .campo select{font-size:var(--fs-14)}
+/* celular com o detalhe aberto por cima: a linha embaixo volta ao tamanho de toque */
+@media (max-width:1099px){.ae-com-detalhe .ae-tabela .ae-balao span{position:static;width:auto;height:auto;overflow:visible;clip:auto}}
+@media (max-width:759px){
+  .ae-btn-acao,.ae-com-detalhe .ae-btn-acao,.ae-com-detalhe .ae-alterar,.ae-com-detalhe .ae-remover,.ae-com-detalhe .ae-aviao,.ae-com-detalhe .ae-mais{min-height:var(--alvo)}
+  .ae-com-detalhe .ae-remover,.ae-com-detalhe .ae-aviao,.ae-com-detalhe .ae-mais{min-width:var(--alvo)}
+}
+
+/* filtros: o mesmo respiro entre todas as seções */
+.ae-filtros-2{row-gap:var(--e-2)}
+.ae-filtros .campo{margin:0}
+.ae-filtros .ae-pop-rodape{margin-top:var(--e-2);padding-top:var(--e-3);border-top:var(--borda)}
+/* ---------- rodada 5 das bancas: cartões em duas colunas no tablet; topo do celular mais curto */
+@media (min-width:760px) and (max-width:1279px){
+  .ae-tabela tbody{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))}
+  .ae-tabela tbody > .ae-grupo{grid-column:1/-1}
+}
+@media (max-width:480px){
+  .ae-barra{display:grid;grid-template-columns:minmax(0,1fr) auto}
+  .ae-barra .ae-busca{grid-column:1}
+  .ae-barra .ae-filtros-btn{grid-column:2;flex:none}
+  .ae-barra .btn{grid-column:1/-1}
+  .ae-barra .ae-enviar-sel[disabled]{display:none}
+}
+@media (max-width:1279px){.ae-end{max-width:none}.ae-end > span:first-child{white-space:normal}}
+/* rodada 6: nos cartões do celular, profissional e ações (avião, Alterar, X) sempre na mesma linha; o nome encolhe */
+@media (max-width:759px){
+  .ae-lin .ae-prof{flex-wrap:nowrap}
+  .ae-lin .ae-prof-txt{flex:1 1 auto;min-width:0}
+  .ae-lin .ae-prof-txt .ae-nome-linha{min-width:0}
+  .ae-lin .ae-prof-txt .ae-nome{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .ae-lin .ae-prof-acoes{flex:none}
+  .ae-sb-cab{flex-wrap:wrap;row-gap:var(--e-2)}
+  .ae-sb-cab .ae-decisao,.ae-sb-cab .ae-link,.ae-sb-cab h2{white-space:nowrap}
+}

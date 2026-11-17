@@ -92,7 +92,7 @@ export function criarCasosEscala({ repo, idem, agoraISO, hojeSP, gerarId, regist
       cliente: { id: c.id, nome: c.nome, telefone: c.telefone, parceria: !!c.parceria },
       local: { logradouro: e.logradouro, numero: e.numero, complemento: e.complemento, bairro: e.bairro, cidade: e.cidade, uf: e.uf, cep: e.cep },
       imovel: { metragem: car.metragem ?? p.pacote?.metragem ?? null, comodos: ambientes(car), caes: (car.animais?.caes || 0) > 0, gatos: (car.animais?.gatos || 0) > 0 },
-      profissional: d ? { id: d.id, nome: d.nome, telefone: d.telefone, nota: b.nota(d.id), habilidades: d.habilidades || [] } : null,
+      profissional: d ? { id: d.id, nome: d.nome, telefone: d.telefone, nota: b.nota(d.id), habilidades: d.habilidades || [], foto: d.foto || null } : null,
       pagamento, ocorrenciaAberta: ['aberto', 'em_analise'].includes(a.ocorrencia?.estado), alertaFixa: alertaFixa(a, b),
       vinculoFixo: v ? { id: v.id, diaristaId: v.diaristaId, nome: b.D[v.diaristaId]?.nome || null } : null,
       observacao: [a.justificativa, p.observacaoDisponibilidade].filter(Boolean).join(' · ') || null, prioridades: car.prioridades || [],
@@ -163,7 +163,7 @@ export function criarCasosEscala({ repo, idem, agoraISO, hojeSP, gerarId, regist
         const itens = b.ats.filter((a) => a.data >= de && a.data <= ate && visivel(a, b)).map((a) => item(a, b, agora))
           .sort((x, y) => `${x.data}${x.horaInicio}`.localeCompare(`${y.data}${y.horaInicio}`));
         const standby = b.sbs.filter((s) => s.data >= de && s.data <= ate && ['reservada', 'confirmada'].includes(s.estado) && s.horaInicio).map((s) => ({
-          diaristaId: s.diaristaId, nome: b.D[s.diaristaId]?.nome || '', nota: b.nota(s.diaristaId), data: s.data, horaInicio: s.horaInicio, duracaoMinutos: s.duracaoMinutos,
+          diaristaId: s.diaristaId, nome: b.D[s.diaristaId]?.nome || '', foto: b.D[s.diaristaId]?.foto || null, nota: b.nota(s.diaristaId), data: s.data, horaInicio: s.horaInicio, duracaoMinutos: s.duracaoMinutos,
           regiao: s.regiao || '', estado: s.estado, decidirAte: s.decidirAte || null, atendimentoId: s.atendimentoId || null,
         })).sort((x, y) => `${x.data}${x.horaInicio}`.localeCompare(`${y.data}${y.horaInicio}`));
         return { de, ate, agora, config: { prazoSemRespostaMin: config.prazoSemRespostaMin, verificacaoPagamento: config.verificacaoPagamento, standbyAlertaMin: config.standbyAlertaMin, canalAtivo: config.canalAtivo }, itens, standby };
@@ -188,7 +188,7 @@ export function criarCasosEscala({ repo, idem, agoraISO, hojeSP, gerarId, regist
       return repo.leitura(TODOS, async (tx) => {
         const { a } = await exigirDiaria(tx, atendimentoId); const b = await carregar(tx);
         const itens = b.dias.filter((d) => d.status === 'aprovada').map((d) => ({
-          id: d.id, nome: d.nome, nota: b.nota(d.id), habilidades: d.habilidades || [], regioes: d.disponibilidade?.regioes || [], atribuida: d.id === a.diaristaId,
+          id: d.id, nome: d.nome, foto: d.foto || null, nota: b.nota(d.id), habilidades: d.habilidades || [], regioes: d.disponibilidade?.regioes || [], atribuida: d.id === a.diaristaId,
           ...pontuarCandidata(diariaParaPontuar(a, b), d, contexto(a, d, b)),
         })).sort((x, y) => Number(y.atribuida) - Number(x.atribuida) || Number(x.impedida) - Number(y.impedida) || y.pontos - x.pontos || x.nome.localeCompare(y.nome));
         return { atualId: a.diaristaId || null, origem: a.diaristaId ? (a.designacaoOrigem || 'manual') : null, sugestao: a.escalaSugestao || null, criteriosSemDado: CRITERIOS_SEM_DADO, itens };

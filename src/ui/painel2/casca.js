@@ -53,8 +53,11 @@ export function montarCasca({ tela, sec, sessao, hoje, compacta = false }) {
   const expandido = compacta && guardado.ler('menu.expandido') === '1';
   const alternarMenu = compacta ? el('button', { type: 'button', class: 'p-menu-item p-menu-alternar', 'aria-expanded': String(expandido), 'aria-label': expandido ? 'Recolher o menu' : 'Expandir o menu', title: expandido ? 'Recolher o menu' : 'Expandir o menu' }, [icone(expandido ? 'esquerda' : 'direita')]) : null;
   const menu = el('nav', { class: 'p-menu', 'aria-label': 'Menu do painel' }, [
-    el('a', { class: 'p-marca', href: hrefTela('inicio') }, [el('img', { src: url('assets/logo.svg'), alt: '', width: '34', height: '30' }), el('span', {}, ['PRIME', el('small', { text: 'Painel da equipe' })])]),
+    // logo oficial branco no menu azul-noite e a folhagem dourada embaixo, como nas imagens da cliente (17/11/2026)
+    el('a', { class: 'p-marca', href: hrefTela('inicio'), 'aria-label': 'Prime Limpeza Especializada, painel da equipe: Início' }, [el('img', { class: 'p-marca-logo', src: url('assets/marca/logo-branco.svg'), alt: '', width: '128', height: '90' }), el('img', { class: 'p-marca-simbolo', src: url('assets/marca/simbolo-branco.svg'), alt: '', width: '44', height: '14' })]),
     el('ul', { class: 'p-menu-lista' }, [...itens, el('li', {}, [btnGestao, sub])]),
+    el('div', { class: 'p-folhagem', 'aria-hidden': 'true' }),
+    el('p', { class: 'p-frase', 'aria-hidden': 'true' }, ['Mais que diárias,', el('br'), 'tranquilidade.']),
     el('div', { class: 'p-menu-rodape' }, [trocarArea, sair, alternarMenu]),
   ]);
 
