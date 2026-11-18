@@ -104,7 +104,8 @@ t.teste('B3 Início: o que precisa da equipe primeiro (solicitações novas e Pr
   const titulos = await p.locator('section.p-bloco:not([hidden]) h2').allInnerTexts();
   // ordem da imagem 05 da cliente (17/11/2026): solicitações, diárias de hoje e de amanhã, depois "Precisa de você"
   assert.deepEqual(titulos.filter((x) => ['Solicitações novas', 'Precisa de você', 'Diárias de hoje', 'Diárias de amanhã'].includes(x)), ['Solicitações novas', 'Diárias de hoje', 'Diárias de amanhã', 'Precisa de você']);
-  assert.ok(titulos.includes('Meta de diárias') && titulos.includes('Motivos de cancelamento') && titulos.includes('Regiões mais atendidas'));
+  // Motivos de cancelamento e Regiões mais atendidas saíram do Início a pedido da Isa (18/11/2026): só a meta fica
+  assert.ok(titulos.includes('Meta de diárias') && !titulos.includes('Motivos de cancelamento') && !titulos.includes('Regiões mais atendidas'));
   assert.match(await p.locator('h1').innerText(), /^(Bom dia|Boa tarde|Boa noite), Equipe!$/);
   const l = linhas(p).first();
   assert.match(await l.innerText(), /Ana Teste Fictícia[\s\S]*Savassi - BH[\s\S]*Residencial[\s\S]*R\$ 203,00/);
@@ -162,9 +163,7 @@ t.teste('B3 Precisa de você: item com ação direta, filtro por tipo; blocos va
     await p.waitForFunction((id) => { const s = document.querySelector(`[data-bloco=${id}]`); return s && (s.hidden || !s.querySelector('.esqueleto')); }, b);
     if (await sec.isVisible()) assert.ok(await sec.locator('.p-lista li').count() >= 1, `${b} visível só com itens`);
   }
-  await p.waitForSelector('[data-bloco=inicio-regioes] .p-alternancia');
-  await p.locator('[data-bloco=inicio-regioes]').getByRole('button', { name: 'Bairros' }).click();
-  assert.equal(await p.locator('[data-bloco=inicio-regioes]').getByRole('button', { name: 'Bairros' }).getAttribute('aria-pressed'), 'true');
+  assert.equal(await p.locator('[data-bloco=inicio-motivos], [data-bloco=inicio-regioes]').count(), 0, 'motivos e regiões fora do Início (Isa, 18/11)');
   assert.deepEqual(p.erros, []);
 });
 
@@ -269,17 +268,18 @@ t.teste('demonstração (seed rico): todos os blocos do Início com dados, urgê
   await p.evaluate((c) => { localStorage.setItem('prime.sessao', JSON.stringify({ ator: 'prime', id: c.id, nome: c.nome, papel: 'prime_admin' })); localStorage.setItem('prime.seedDemo', 'painel'); }, C.prime[1]);
   await p.goto(`${base}painel/?tela=inicio`);
   await p.waitForSelector('[data-bloco=inicio-solicitacoes] tr.p-lin', { timeout: 30000 });
-  await p.waitForFunction(() => document.querySelectorAll('section.p-bloco').length >= 9 && document.querySelectorAll('section.p-bloco .esqueleto').length === 0, null, { timeout: 30000 });
+  await p.waitForFunction(() => document.querySelectorAll('section.p-bloco').length >= 8 && document.querySelectorAll('section.p-bloco .esqueleto').length === 0, null, { timeout: 30000 });
   for (const b2 of ['inicio-solicitacoes', 'inicio-pendencias', 'inicio-alertas', 'inicio-cadastros']) assert.ok(await p.locator(`[data-bloco=${b2}] .p-lista li, [data-bloco=${b2}] tr.p-lin`).count() >= 1, b2);
   // imagem 05 da cliente (17/11/2026, "layout 100 por cento igual"): no computador todos os blocos começam abertos, lado a
   // lado (no celular os secundários continuam recolhidos, teste B6); recolher continua valendo e fica guardado
-  for (const b2 of ['inicio-amanha', 'inicio-alertas', 'inicio-cadastros', 'inicio-meta', 'inicio-motivos', 'inicio-regioes']) assert.equal(await p.locator(`[data-bloco=${b2}] .p-recolher`).getAttribute('aria-expanded'), 'true', `${b2} começa aberto`);
+  for (const b2 of ['inicio-amanha', 'inicio-alertas', 'inicio-cadastros', 'inicio-meta']) assert.equal(await p.locator(`[data-bloco=${b2}] .p-recolher`).getAttribute('aria-expanded'), 'true', `${b2} começa aberto`);
   assert.match(await p.locator('[data-bloco=inicio-pendencias] .p-bloco-cab').innerText(), /\d+ urgentes?/);
   // pagamento pendente não trava nada (spec da Agenda, seção 7): no Início é atenção, nunca urgente vermelho
   assert.equal(await p.locator('[data-bloco=inicio-pendencias] li.urgente[data-tipo=pagamento_vencido]').count(), 0, 'pagamento vencido não é urgente');
   assert.match(await p.locator('[data-bloco=inicio-meta] .p-bloco-cab').innerText(), /\d+ de \d+ \(\d+%\)/);
   assert.match(await p.locator('[data-bloco=inicio-meta]').innerText(), /Mês anterior[\s\S]*\d+/);
-  assert.match(await p.locator('[data-bloco=inicio-regioes]').innerText(), /Belo Horizonte/);
+  // a meta, sozinha na última fileira, ocupa a largura toda (sem os dois buracos de Motivos e Regiões)
+  assert.ok(await p.evaluate(() => { const m = document.querySelector('[data-bloco=inicio-meta]').getBoundingClientRect(); const l = document.querySelector('.p-ini-l4').getBoundingClientRect(); return Math.abs(m.width - l.width) < 2; }), 'meta na largura toda');
   assert.match(await p.locator('.p-sistema-btn').innerText(), /\d+ ações automáticas hoje/);
   assert.deepEqual(erros, []);
   await ctx.close();
@@ -325,7 +325,7 @@ t.teste('B6 celular: indicadores e listas secundárias começam recolhidos; aç�
   for (const w of [390, 320]) {
     const p = await paginaPrime(w);
     await p.waitForSelector('[data-bloco=inicio-solicitacoes] tr.p-lin');
-    for (const b2 of ['inicio-meta', 'inicio-motivos', 'inicio-regioes']) assert.equal(await p.locator(`[data-bloco=${b2}] .p-recolher`).getAttribute('aria-expanded'), 'false', `${b2} recolhido em ${w}`);
+    for (const b2 of ['inicio-meta']) assert.equal(await p.locator(`[data-bloco=${b2}] .p-recolher`).getAttribute('aria-expanded'), 'false', `${b2} recolhido em ${w}`);
     assert.equal(await p.locator('[data-bloco=inicio-solicitacoes] .p-recolher').getAttribute('aria-expanded'), 'true', 'a prioridade fica aberta');
     const pequenos = await p.evaluate(() => [...document.querySelectorAll('[data-bloco=inicio-solicitacoes] .p-acoes-cel button, [data-bloco=inicio-pendencias] .p-acoes-item button, .p-recolher, .p-barra-inferior a, .p-barra-inferior button')]
       .filter((x) => x.getClientRects().length).map((x) => x.getBoundingClientRect()).filter((r) => r.height < 44 || r.width < 40).length);
