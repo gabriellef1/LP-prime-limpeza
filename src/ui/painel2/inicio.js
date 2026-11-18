@@ -13,10 +13,10 @@ import { CONFIG_PRECOS as CFG } from '../../config/precos.js';
 import { detalhesSolicitacaoV3 } from '../paginas/painel-v3.js';
 import { icone, ICONE_SERVICO } from './icones.js';
 import { convidarTour, iniciarTour } from './tour.js';
-import { anel, rosca, COR_G } from './inicio-vista.js';
+import { anel } from './inicio-vista.js';
 import {
   bloco, botao, selo, avatar, zap, tabelaExpansivel, detalhe, filtrosVerticais, tudoResolvido, vazio, pedirMotivo, modal, confirmar,
-  painelLateral, barras, esqueleto,
+  painelLateral, esqueleto,
   TOM_SELO,
 } from './componentes.js';
 
@@ -165,15 +165,14 @@ export async function telaInicio({ sessao, hoje, casca }) {
     },
   });
 
-  // ---------------------------------------------------------------- indicadores (só os três da Home)
+  // ---------------------------------------------------------------- indicador da Home: só a meta (Motivos de cancelamento e
+  // Regiões mais atendidas saíram a pedido da Isa, 18/11/2026)
   const ind = () => dado('indicadores', () => api.painelIndicadoresHome(null));
   blocos.meta = bloco({ id: 'inicio-meta', titulo: 'Meta de diárias', ic: 'meta', recolhidoNoCelular: true, carregar: async () => blocoMeta(await ind()) });
-  blocos.motivos = bloco({ id: 'inicio-motivos', titulo: 'Motivos de cancelamento', ic: 'calendario_x', recolhidoNoCelular: true, carregar: async () => blocoMotivos(await ind()) });
-  blocos.regioes = bloco({ id: 'inicio-regioes', titulo: 'Regiões mais atendidas', ic: 'local', recolhidoNoCelular: true, carregar: async () => blocoRegioes(await ind()) });
 
   // como na imagem 05 da cliente (17/11/2026): saudação com a coroa, "Sistema trabalhando por você" e a data à direita;
   // solicitações na largura toda, diárias de hoje e de amanhã lado a lado, depois pendências, stand-by, alertas e
-  // cadastros numa linha e os três indicadores na última
+  // cadastros numa linha e a meta de diárias na última, na largura toda
   casca.conteudo.classList.add('p-ini');
   trocar(casca.conteudo,
     el('div', { class: 'p-cabecalho p-ini-cab' }, [
@@ -188,7 +187,7 @@ export async function telaInicio({ sessao, hoje, casca }) {
     blocos.solicitacoes.raiz,
     el('div', { class: 'p-grade p-ini-l2' }, [blocos.diariasHoje.raiz, blocos.diariasAmanha.raiz]),
     el('div', { class: 'p-grade p-ini-l3' }, [blocos.pendencias.raiz, blocos.standby.raiz, blocos.alertas.raiz, blocos.cadastros.raiz]),
-    el('div', { class: 'p-grade p-ini-l4' }, [blocos.meta.raiz, blocos.motivos.raiz, blocos.regioes.raiz]));
+    el('div', { class: 'p-grade p-ini-l4' }, [blocos.meta.raiz]));
   // cada bloco carrega e desenha sozinho (sem travar os outros)
   for (const b of Object.values(blocos)) b.recarregar();
   sistema.carregar();
@@ -492,39 +491,5 @@ function blocoMeta(r) {
       ]),
     ]),
   };
-}
-
-function blocoMotivos(r) {
-  const total = r.cancelamentos.reduce((s, x) => s + x.total, 0);
-  // rosca com o total no meio e a legenda em tabela (número e porcentagem junto de cada cor), como na imagem 05
-  const itens = r.cancelamentos.slice(0, 5);
-  return { sub: total ? `Este mês · ${total} ${total === 1 ? 'diária cancelada' : 'diárias canceladas'}` : 'Este mês',
-    conteudo: total ? el('div', { class: 'pn-graf p-ini-graf' }, [
-      el('div', { class: 'pn-rosca-caixa' }, [rosca(itens.map((x) => [x.rotulo, x.total])), el('span', { class: 'pn-anel-n' }, [el('b', { text: String(total) }), el('small', { text: total === 1 ? 'diária' : 'diárias' })])]),
-      el('table', { class: 'pn-legenda' }, [el('caption', { class: 'p-sr', text: 'Motivos de cancelamento no mês' }), el('tbody', {}, itens.map((x, i) => el('tr', {}, [
-        el('th', { scope: 'row', title: x.rotulo }, [el('span', { class: 'pn-leg-ponto', style: `background:${COR_G[i % COR_G.length]}` }), x.rotulo.split(' (')[0]]),
-        el('td', { text: `${Math.round((x.total / total) * 100)}%`, title: `${x.total} ${x.total === 1 ? 'diária' : 'diárias'}` }),
-      ])))]),
-    ]) : vazio('Nenhuma diária cancelada este mês.') };
-}
-
-function blocoRegioes(r) {
-  let modo = 'cidades'; let cidade = null;
-  const caixa = el('div');
-  const alt = el('div', { class: 'p-alternancia', role: 'group', 'aria-label': 'Ver por' });
-  const btC = el('button', { type: 'button', 'aria-pressed': 'true', text: 'Cidades' });
-  const btB = el('button', { type: 'button', 'aria-pressed': 'false', text: 'Bairros' });
-  alt.append(btC, btB);
-  const desenhar = () => {
-    btC.setAttribute('aria-pressed', String(modo === 'cidades')); btB.setAttribute('aria-pressed', String(modo === 'bairros'));
-    if (!r.regioes.length) { trocar(caixa, vazio('Sem diárias neste mês ainda.')); return; }
-    if (modo === 'cidades') { trocar(caixa, barras(r.regioes.slice(0, 6).map((x) => ({ rotulo: x.cidade, valor: x.total })), { aoClicar: (c) => { cidade = c; modo = 'bairros'; desenhar(); }, rotuloColuna: 'Cidades' })); return; }
-    const c = r.regioes.find((x) => x.cidade === cidade) || r.regioes[0];
-    trocar(caixa, el('p', { class: 'p-sec u-mb-2', text: `Bairros de ${c.cidade}` }), barras(c.bairros.slice(0, 6).map((x) => ({ rotulo: x.bairro, valor: x.total })), { rotuloColuna: `Bairros de ${c.cidade}` }));
-  };
-  btC.addEventListener('click', () => { modo = 'cidades'; desenhar(); });
-  btB.addEventListener('click', () => { modo = 'bairros'; desenhar(); });
-  desenhar();
-  return { conteudo: el('div', {}, [el('div', { class: 'p-ini-regioes-alt' }, [alt]), caixa]) };
 }
 
