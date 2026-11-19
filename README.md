@@ -67,7 +67,7 @@ O front passa a mandar só os comandos de negócio de `docs/API.md`. Isso cobre 
 
 ## Preencher antes de publicar
 
-**`src/config/prime.js`** (hoje tudo `PREENCHER`):
+**`src/config/prime.js`** (preenchido em 18/11/2026 com os dados do cartão CNPJ; `PREENCHER` em qualquer campo desliga a função):
 - `pix.chave`, `pix.nomeRecebedor` (até 25 caracteres), `pix.cidadeRecebedor` (até 15). Sem os três, a tela de Pix mostra aviso e não gera cobrança.
 - `whatsapp` no formato `5531...`. Sem ele, os botões "Falar com a Prime no WhatsApp" somem.
 - `email` e `endereco` (opcionais).

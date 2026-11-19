@@ -1,16 +1,18 @@
 // SEO técnico (S1, fase 2). Fonte única: scripts/gera-seo.mjs escreve o bloco <!-- seo --> de cada página pública,
 // sitemap.xml e robots.txt a partir daqui; scripts/verifica-seo.mjs confere o resultado.
-// Dado da empresa que não temos fica 'PREENCHER' e NÃO é publicado (o gerador omite o campo e lista como pendente).
+// Dados da empresa: cartão CNPJ emitido em 10/11/2026. Campo 'PREENCHER' (se voltar a existir) NÃO é publicado: o gerador omite e lista como pendente.
 export const DOMINIO = 'https://primelimpezaespecializada.com.br'; // PENDENCIA: com ou sem www no go-live
 export const VERSAO_SEO = '2026-09-28';
 
 export const EMPRESA = {
   nome: 'Prime Limpeza Especializada',
-  razaoSocial: 'PREENCHER',
-  cnpj: 'PREENCHER',
-  telefone: '+55-31-97236-3590', // o mesmo publicado no rodapé
-  email: 'PREENCHER',
-  endereco: { rua: 'PREENCHER', bairro: 'PREENCHER', cidade: 'Belo Horizonte', uf: 'MG', cep: 'PREENCHER' },
+  razaoSocial: 'PRIME LIMPEZA ESPECIALIZADA LTDA',
+  cnpj: '49.450.793/0001-30',
+  telefone: '+55-31-97236-3590', // os dois do rodapé: este (WhatsApp de atendimento e de disparo) e o de baixo
+  telefone2: '+55-31-99717-6829',
+  email: 'primelimpezaespecializada@gmail.com',
+  encarregado: 'Isabella Costa', // responsável pelos dados (LGPD); o contato de privacidade é o e-mail acima
+  endereco: { rua: 'Rua Paraíba, 550, Sala 800', bairro: 'Savassi', cidade: 'Belo Horizonte', uf: 'MG', cep: '30130-141' },
   instagram: 'https://instagram.com/primelimpeza_especializada',
   // mesmo horário do rodapé
   horario: [{ dias: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'], abre: '08:00', fecha: '18:00' }, { dias: ['Saturday'], abre: '08:00', fecha: '14:00' }],

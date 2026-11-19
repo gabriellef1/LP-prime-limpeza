@@ -7,6 +7,7 @@ import { ICONE_CHECK } from '../icones.js';
 import { montarPagina, definirAbertura } from '../layout.js';
 import { campo, grupoOpcoes, aplicarErros } from '../form.js';
 import { campoUpload, AJUDA_UPLOAD } from '../upload.js';
+import { prepararFotoPerfil } from '../foto-perfil.js';
 import { api, agora, novaChave } from '../../services/api.js';
 import { definirSessao, sessaoAtual } from '../../services/sessao.js';
 import { auth } from '../../services/auth.js';
@@ -185,6 +186,12 @@ function passoDisponibilidade() {
   });
 }
 
+const AVISO_FOTO = {
+  antes: 'Uma foto sua de frente, com o rosto bem iluminado (pode ser selfie). O fundo é trocado pelo padrão da Prime aqui mesmo, no seu aparelho.',
+  ok: 'Fundo padrão da Prime aplicado. É esta a foto que fica no seu cadastro.',
+  semRecorte: 'Não deu pra trocar o fundo desta foto: ela foi guardada com o fundo desfocado e a equipe da Prime vai revisar. Se puder, envie outra de frente, com o rosto bem iluminado.',
+};
+
 async function passoDocumentos() {
   const { itens } = await api.listarDocumentos(r.id, { sessao: { ator: 'publico' } });
   const porTipo = Object.fromEntries(itens.map((d) => [d.tipo, d]));
@@ -193,10 +200,16 @@ async function passoDocumentos() {
   const fixos = ['comprovante_residencia', 'foto_perfil', 'antecedentes'];
   const uploads = {};
   const enviar = (tipo) => async ({ file }) => {
-    await api.salvarDocumento({ diaristaId: r.id, tipo, nomeArquivo: file.name, mime: file.type, tamanho: file.size, conteudo: file }, { chave: novaChave(), sessao: { ator: 'publico' } });
+    if (tipo !== 'foto_perfil') { await api.salvarDocumento({ diaristaId: r.id, tipo, nomeArquivo: file.name, mime: file.type, tamanho: file.size, conteudo: file }, { chave: novaChave(), sessao: { ator: 'publico' } }); return undefined; }
+    // foto de perfil: o fundo é trocado aqui no navegador e só a versão final é guardada (a selfie original não é enviada)
+    let foto;
+    try { foto = await prepararFotoPerfil(file); } catch { throw new Error('Não foi possível abrir esta foto. Envie uma foto em JPG ou PNG.'); }
+    const f = foto.arquivo;
+    await api.salvarDocumento({ diaristaId: r.id, tipo, nomeArquivo: f.name, mime: f.type, tamanho: f.size, conteudo: f, semRecorte: foto.semRecorte }, { chave: novaChave(), sessao: { ator: 'publico' } });
+    return { arquivo: f, aviso: foto.semRecorte ? AVISO_FOTO.semRecorte : AVISO_FOTO.ok };
   };
   const previa = (tipo) => async () => { const d = porTipo[tipo]; if (!d) return null; const a = await api.obterArquivo(d.id, { sessao: { ator: 'publico' } }); return a.conteudo instanceof Blob ? a.conteudo : new Blob([a.conteudo], { type: d.mime }); };
-  const criar = (tipo) => { uploads[tipo] = campoUpload({ tipo, existente: porTipo[tipo], aoEscolher: enviar(tipo), obterPrevia: previa(tipo) }); return uploads[tipo].raiz; };
+  const criar = (tipo) => { uploads[tipo] = campoUpload({ tipo, existente: porTipo[tipo], aoEscolher: enviar(tipo), obterPrevia: previa(tipo), ...(tipo === 'foto_perfil' ? { soFoto: true, ajuda: porTipo[tipo] ? (porTipo[tipo].semRecorte ? AVISO_FOTO.semRecorte : AVISO_FOTO.ok) : AVISO_FOTO.antes } : {}) }); return uploads[tipo].raiz; };
   const blocoRg = el('div', { hidden: r.identidade !== 'rg' }, grupos.rg.map(criar));
   const blocoCnh = el('div', { hidden: r.identidade !== 'cnh' }, grupos.cnh.map(criar));
   identidade.raiz.addEventListener('change', () => { r.identidade = identidade.valor(); blocoRg.hidden = r.identidade !== 'rg'; blocoCnh.hidden = r.identidade !== 'cnh'; salvar(); });

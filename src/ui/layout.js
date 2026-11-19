@@ -57,6 +57,7 @@ export function montarFooter() {
         el('a', { class: 'logo', href: url('') }, [el('img', { src: url('assets/marca/logo-branco.svg'), width: 200, height: 140, alt: 'Prime Limpeza Especializada', class: 'logo-img' })]),
         el('p', {}, ['© 2026 Prime Limpeza Especializada.', el('br'), 'Todos os direitos reservados.']),
         el('p', { class: 'links-legais' }, [el('a', { href: url('privacidade/'), text: 'Política de Privacidade' }), el('a', { href: url('termos/'), text: 'Termos de Uso' })]),
+        el('p', { class: 'footer-empresa' }, ['PRIME LIMPEZA ESPECIALIZADA LTDA', el('br'), 'CNPJ 49.450.793/0001-30', el('br'), 'Rua Paraíba, 550, Sala 800, Savassi', el('br'), 'Belo Horizonte/MG, CEP 30130-141']),
       ]),
       el('div', { class: 'footer-col' }, [
         el('h2', { class: 'footer-titulo', text: 'Atendimento' }),
@@ -66,7 +67,8 @@ export function montarFooter() {
       el('div', { class: 'footer-col' }, [
         el('h2', { class: 'footer-titulo', text: 'Contato' }),
         wa('5531972363590', '(31) 97236-3590'),
-        wa('5531997357372', '(31) 99735-7372'),
+        wa('5531997176829', '(31) 99717-6829'),
+        el('a', { class: 'footer-icon-link footer-email', href: 'mailto:primelimpezaespecializada@gmail.com' }, [svg(iconeHTML('email')), el('span', {}, ['primelimpezaespecializada', el('wbr'), '@gmail.com'])]),
         el('a', { class: 'footer-icon-link', href: 'https://instagram.com/primelimpeza_especializada', target: '_blank', rel: 'noopener' }, [svg(ICONE_INSTA), '@primelimpeza_especializada']),
       ]),
       el('div', { class: 'footer-col' }, [

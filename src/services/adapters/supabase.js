@@ -50,6 +50,46 @@ export function criarAdapterSupabase({ cliente, clientePara, provaHumana = async
   const LER = { semPermissao: 'NAO_ENCONTRADO' };
   const obter = (nome, id, o) => rpc(nome, { p_id: uuid(id) }, o, LER);
   const previasLocais = new Map();
+
+  // ---- foto da profissional (campo `foto` das listas do painel). A foto de perfil mora no bucket privado: a function
+  // `documentos` devolve URLs assinadas curtas (só Prime), o painel baixa e mostra por blob: (a CSP não libera imagem de
+  // outro domínio). Guardado na memória da aba; a lista é conferida de novo a cada 4 minutos. Qualquer falha (function
+  // ainda sem a ação, rede) deixa as iniciais no lugar da foto e não derruba a tela.
+  const fotos = { mapa: new Map(), versoes: new Map(), ate: 0, pedido: null };
+  async function mapaDeFotos(o) {
+    if (Date.now() < fotos.ate) return fotos.mapa;
+    fotos.pedido ||= (async () => {
+      try {
+        const { itens } = await funcao('documentos', { acao: 'fotos' }, o);
+        const vivos = new Set(itens.map((x) => x.diaristaId));
+        for (const id of [...fotos.mapa.keys()]) if (!vivos.has(id)) { URL.revokeObjectURL(fotos.mapa.get(id)); fotos.mapa.delete(id); fotos.versoes.delete(id); }
+        await Promise.allSettled(itens.filter((x) => fotos.versoes.get(x.diaristaId) !== x.versao).map(async (x) => {
+          const r = await fetch(x.url, { signal: AbortSignal.timeout(8000) }); if (!r.ok) return;
+          const antiga = fotos.mapa.get(x.diaristaId); if (antiga) URL.revokeObjectURL(antiga);
+          fotos.mapa.set(x.diaristaId, URL.createObjectURL(await r.blob())); fotos.versoes.set(x.diaristaId, x.versao);
+        }));
+      } catch { /* sem foto: ficam as iniciais */ }
+      fotos.ate = Date.now() + 4 * 60 * 1000; fotos.pedido = null;
+      return fotos.mapa;
+    })();
+    return fotos.pedido;
+  }
+  /** Põe `foto` em quem é profissional na resposta (tem diaristaId, está na chave `profissional` ou é item de candidatas). */
+  async function comFotos(resposta, o, { itensSaoProfissionais = false } = {}) {
+    // as fotos nunca seguram a tela: se a lista demorar mais de 2,5 s a resposta sai com as que já estão na memória
+    // (as outras aparecem na próxima carga)
+    const mapa = await Promise.race([mapaDeFotos(o), new Promise((ok) => { setTimeout(() => ok(fotos.mapa), 2500); })]);
+    if (!mapa.size) return resposta;
+    const ver = (x, chave) => {
+      if (!x || typeof x !== 'object') return;
+      if (Array.isArray(x)) { for (const y of x) ver(y, chave); return; }
+      const id = x.diaristaId || (chave === 'profissional' || (itensSaoProfissionais && chave === 'itens') ? x.id : null);
+      if (id && typeof x.nome === 'string' && !x.foto && mapa.has(id)) x.foto = mapa.get(id);
+      for (const [k, v] of Object.entries(x)) ver(v, k);
+    };
+    ver(resposta, '');
+    return resposta;
+  }
   const usuarioAtual = async (o) => (await (await c(o)).auth.getSession()).data.session?.user?.id ?? null;
 
   /** Edge Function com o token da usuária; erro no formato { erro: { codigo, mensagem, detalhes } }. */
@@ -95,17 +135,17 @@ export function criarAdapterSupabase({ cliente, clientePara, provaHumana = async
     painelSistemaHoje: (o) => rpc('painel_sistema_hoje', {}, o),
     painelResumo: (o) => rpc('painel_resumo', {}, o),
     painelSolicitacoesNovas: (n, o) => rpc('painel_solicitacoes_novas', { p_limite: n ?? 20 }, o),
-    painelDiarias: (d, o) => rpc('painel_diarias', { p_data: d }, o),
+    painelDiarias: async (d, o) => comFotos(await rpc('painel_diarias', { p_data: d }, o), o),
     painelPendencias: (o) => rpc('painel_pendencias', {}, o),
-    painelStandby: (d, o) => rpc('painel_standby', { p_data: d }, o),
+    painelStandby: async (d, o) => comFotos(await rpc('painel_standby', { p_data: d }, o), o),
     painelAlertas: (o) => rpc('painel_alertas', {}, o),
     painelIndicadoresHome: (m, o) => rpc('painel_indicadores_home', { p_mes: m ?? null }, o),
     marcarEscala: (d, acao, motivo, o) => rpc('marcar_escala', { p_data: d, p_acao: acao, p_motivo: motivo ?? null, p_chave: o?.chave }, o),
     // Agenda e Escala (docs/AGENDA-ESCALA.md)
-    agendaEscala: (f, o) => rpc('agenda_escala', { p_de: f?.de, p_ate: f?.ate }, o),
+    agendaEscala: async (f, o) => comFotos(await rpc('agenda_escala', { p_de: f?.de, p_ate: f?.ate }, o), o),
     agendaContagens: (f, o) => rpc('agenda_contagens', { p_de: f?.de, p_ate: f?.ate }, o),
     escalaPreparar: (f, o) => rpc('escala_preparar', { p_de: f?.de, p_ate: f?.ate }, o),
-    escalaCandidatas: (id, o) => rpc('escala_candidatas', { p_atendimento: uuid(id) }, o),
+    escalaCandidatas: async (id, o) => comFotos(await rpc('escala_candidatas', { p_atendimento: uuid(id) }, o), o, { itensSaoProfissionais: true }),
     escalaAlterar: (id, dados, o) => rpc('escala_alterar', { p_id: uuid(id), p_dados: dados || {}, p_chave: o?.chave }, o),
     escalaRemover: (id, o) => rpc('escala_remover', { p_id: uuid(id), p_chave: o?.chave }, o),
     escalaRevisar: (id, versao, o) => rpc('escala_revisar', { p_id: uuid(id), p_versao: versao ?? null, p_chave: o?.chave }, o),
@@ -175,7 +215,7 @@ export function criarAdapterSupabase({ cliente, clientePara, provaHumana = async
      * Upload pela Edge Function "documentos" (B6): o bucket não aceita nada direto do navegador. Ela repete tipo, tamanho e
      * assinatura dos bytes, grava no caminho da dona e registra. A checagem daqui é só pra responder rápido.
      */
-    async salvarDocumento({ diaristaId, tipo, nomeArquivo, mime, tamanho, conteudo }, o = {}) {
+    async salvarDocumento({ diaristaId, tipo, nomeArquivo, mime, tamanho, conteudo, semRecorte }, o = {}) {
       if (!EXT[mime]) throw new ErroNegocio('DADOS_INVALIDOS', 'Formato não aceito: use JPG, PNG ou PDF', { arquivo: 'Formato não aceito: use JPG, PNG ou PDF' });
       const corpo = conteudo instanceof Blob ? conteudo : new Blob([conteudo], { type: mime });
       if (tamanho !== undefined && tamanho !== corpo.size) throw new ErroNegocio('DADOS_INVALIDOS', 'Tamanho do arquivo não confere');
@@ -186,6 +226,7 @@ export function criarAdapterSupabase({ cliente, clientePara, provaHumana = async
       form.append('diaristaId', uuid(diaristaId));
       form.append('tipo', tipo);
       form.append('nomeArquivo', nomeArquivo);
+      if (tipo === 'foto_perfil' && semRecorte === true) form.append('semRecorte', 'true');
       if (o.chave) form.append('chave', o.chave);
       form.append('arquivo', new File([corpo], nomeArquivo, { type: mime }));
       const doc = await funcao('documentos', form, o);

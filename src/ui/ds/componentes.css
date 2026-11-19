@@ -263,6 +263,10 @@ footer.site,body > footer{background:var(--cor-escuro);color:var(--cor-escuro-te
 .footer-col a.footer-icon-link{display:flex;align-items:center;gap:var(--e-2)}
 .links-legais{display:flex;flex-wrap:wrap;gap:var(--e-1) var(--e-4);margin-top:var(--e-3);font-size:var(--fs-14)}
 .links-legais a{color:var(--cor-escuro-texto)}
+/* dados da empresa (cartão CNPJ) e e-mail: o endereço quebra por linha e o e-mail quebra em qualquer ponto, sem estourar no celular */
+.footer-brand .footer-empresa{margin-top:var(--e-3)}
+.footer-col a.footer-email{overflow-wrap:anywhere;align-items:flex-start}
+.footer-col a.footer-email .ic{flex:none}
 footer :focus-visible{outline-color:var(--cor-foco-escuro)}
 @media (max-width:960px){.footer-grid{grid-template-columns:1fr 1fr}}
 @media (max-width:600px){.footer-grid{grid-template-columns:1fr;gap:var(--e-5)}}

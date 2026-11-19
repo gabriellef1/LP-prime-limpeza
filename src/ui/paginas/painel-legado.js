@@ -386,7 +386,9 @@ async function abaCadastros(diaristas) {
         trocar(previa, doc.mime === 'application/pdf' ? el('iframe', { src: u, title: doc.nomeArquivo, class: 'previa-doc' }) : el('img', { src: u, alt: doc.nomeArquivo, class: 'previa-doc' }));
         previa.hidden = false; ver.textContent = 'Fechar';
       });
-      return el('li', {}, [el('div', { class: 'topo' }, [el('span', { text: `${ROTULOS_DOCUMENTO[doc.tipo]} · ${doc.nomeArquivo}` }), ver]), previa]);
+      // foto de perfil que o navegador não conseguiu recortar: a equipe confere e, se preciso, pede outra
+      const semRecorte = doc.tipo === 'foto_perfil' && doc.semRecorte ? el('p', { class: 'alerta alerta-info u-mt-2', dataset: { fotoSemRecorte: '' }, role: 'status', text: 'Foto sem recorte do fundo: ficou a original com o fundo desfocado. Confira e, se precisar, peça outra foto à profissional.' }) : null;
+      return el('li', {}, [el('div', { class: 'topo' }, [el('span', { text: `${ROTULOS_DOCUMENTO[doc.tipo]} · ${doc.nomeArquivo}` }), ver]), semRecorte, previa]);
     }));
     const motivo = campo({ id: `motivo-${d.id}`, rotulo: 'Motivo (obrigatório pra reprovar; vai só pro registro interno)', attrs: { maxlength: 200 } });
     blocos.push(el('div', { class: 'cartao principal', dataset: { diarista: d.id } }, [

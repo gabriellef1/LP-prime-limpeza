@@ -13,7 +13,7 @@ const RAIZ = fileURLToPath(new URL('..', import.meta.url));
 const DIST = join(RAIZ, 'dist');
 // Lista PERMITIDA (não de exclusão): arquivo novo na raiz, como um backup, nunca vai pro ar por engano.
 export const PERMITIDO = /^(index\.html|404\.html|sitemap\.xml|robots\.txt|_redirects|_dev\/design-system\/.+|_dev\/inicio-maquete\/.+|(assets|src|vendor|acompanhamento|autoagendamento|avaliacao|diarista|entrar|minha-conta|pagamento|painel|painel-proposta|privacidade|termos|condicoes)\/.+)$/;
-export const EXTENSOES = /(\.(html|js|css|svg|png|jpe?g|webp|avif|ico|mp4|woff2?|pdf|webmanifest)|^(_redirects|sitemap\.xml|robots\.txt))$/i; // xml/txt só esses da raiz
+export const EXTENSOES = /(\.(html|js|mjs|css|svg|png|jpe?g|webp|avif|ico|mp4|woff2?|pdf|webmanifest|wasm|tflite)|^(_redirects|sitemap\.xml|robots\.txt))$/i; // xml/txt só esses da raiz
 // O mock (demonstração) lê o seed em runtime: é o único arquivo de scripts/ que vai pro site.
 const EXTRA = ['scripts/fixtures/seed.js', 'scripts/fixtures/seed-painel.js', 'scripts/fixtures/seed-agenda.js', 'scripts/fixtures/inicio-referencia.js'];
 // Páginas de sistema: noindex também em produção.
@@ -40,6 +40,9 @@ export function montarHeaders({ ref, scripts, handlers, analytics = false }) {
     'frame-src https://challenges.cloudflare.com', // P7: caixinha do Turnstile
     "frame-ancestors 'none'", "base-uri 'self'", "form-action 'self'", "object-src 'none'",
   ].join('; ');
+  // Foto de perfil da profissional: o recorte do fundo roda em WebAssembly (vendor/mediapipe-tasks-vision). Só a página do
+  // cadastro ganha 'wasm-unsafe-eval' (compila WASM; não libera eval de JS): a regra dela tira a CSP geral e põe a própria.
+  const cspCadastro = csp.replace("script-src 'self'", "script-src 'self' 'wasm-unsafe-eval'");
   return [
     '/*',
     `  Content-Security-Policy: ${csp}`,
@@ -51,6 +54,11 @@ export function montarHeaders({ ref, scripts, handlers, analytics = false }) {
     // subdomínios do domínio da Prime no go-live (PENDENCIAS). COOP isola a janela de páginas abertas por outro site.
     '  Strict-Transport-Security: max-age=31536000',
     '  Cross-Origin-Opener-Policy: same-origin',
+    '',
+    '# Cadastro da profissional: tira a CSP geral (regra de cima) e põe a que deixa compilar o WASM do recorte da foto.',
+    '/diarista/cadastro/*',
+    '  ! Content-Security-Policy',
+    `  Content-Security-Policy: ${cspCadastro}`,
     '',
     '# Preview (*.pages.dev) inteiro fora do Google, inclusive o alias da branch.',
     'https://:project.pages.dev/*', '  X-Robots-Tag: noindex', '',

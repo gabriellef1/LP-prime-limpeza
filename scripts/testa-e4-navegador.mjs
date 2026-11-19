@@ -12,13 +12,16 @@ const b = await abrirNavegador();
 const HOJE = dataNoFuso(new Date().toISOString());
 const DATA = proximaDataPermitida(HOJE, 3, CONFIG_PRECOS);
 
+const PRIME_SEM_DADOS = "export const PRIME = { pix: { chave: 'PREENCHER', nomeRecebedor: 'PREENCHER', cidadeRecebedor: 'PREENCHER' }, whatsapp: 'PREENCHER', email: 'PREENCHER', endereco: 'PREENCHER' };";
+/** comPix: true = config de teste; false = sem dados (PREENCHER); 'real' = src/config/prime.js como está. */
 async function novaPagina(comPix = true) {
   const ctx = await b.newContext({ viewport: { width: 390, height: 900 } });
   const p = await ctx.newPage();
   p.erros = [];
   p.on('console', (m) => m.type() === 'error' && p.erros.push(m.text()));
   p.on('pageerror', (e) => p.erros.push(e.message));
-  if (comPix) await ctx.route('**/src/config/prime.js', (route) => route.fulfill({ path: 'src/config/prime.teste.js', contentType: 'text/javascript' }));
+  if (comPix === true) await ctx.route('**/src/config/prime.js', (route) => route.fulfill({ path: 'src/config/prime.teste.js', contentType: 'text/javascript' }));
+  if (comPix === false) await ctx.route('**/src/config/prime.js', (route) => route.fulfill({ body: PRIME_SEM_DADOS, contentType: 'text/javascript' }));
   await ctx.grantPermissions(['clipboard-read', 'clipboard-write']);
   return p;
 }
@@ -125,7 +128,17 @@ t.teste('id inexistente e pagamento de outra pessoa', async () => {
   await outra.locator('h1', { hasText: 'Não encontramos' }).waitFor(); // abertura provisória vem antes (Q1)
 });
 
-t.teste('config Pix incompleta (prime.js real): pedido existe, tela avisa, sem QR nem cobrança', async () => {
+t.teste('prime.js real (dados da Prime de 18/11/2026): QR e copia e cola com a chave CNPJ, recebedor e cidade no limite do padrão', async () => {
+  const q = await novaPagina('real');
+  const r = await criarPedido(q);
+  await q.goto(`${base}pagamento/?pagamento=${r.cobranca}`);
+  await q.waitForSelector('#copia-cola');
+  assert.equal(await q.locator('.qr svg').count(), 1);
+  assert.match(await q.locator('#copia-cola').innerText(), /^000201.*0014br\.gov\.bcb\.pix011449450793000130.*5924PRIME LIMPEZA ESPECIALIZ6014BELO HORIZONTE.*6304[0-9A-F]{4}$/);
+  assert.deepEqual(q.erros, []);
+});
+
+t.teste('config Pix incompleta (PREENCHER): pedido existe, tela avisa, sem QR nem cobrança', async () => {
   const q = await novaPagina(false);
   const r = await criarPedido(q);
   await q.goto(`${base}pagamento/?pagamento=${r.cobranca}`);

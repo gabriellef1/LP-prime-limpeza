@@ -3,6 +3,7 @@
 // Uso: node scripts/varre-segredos.mjs          (arquivos do git: rastreados, staged e novos não ignorados)
 //      node scripts/varre-segredos.mjs dist     (também tudo dentro de dist/, antes do deploy)
 import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join, relative } from 'node:path';
@@ -10,8 +11,12 @@ import { fileURLToPath } from 'node:url';
 import { chavePublica, lerPrimeEnv } from './gera-ambiente.mjs';
 
 const RAIZ = fileURLToPath(new URL('..', import.meta.url));
-const BINARIO = /\.(png|jpe?g|webp|gif|ico|pdf|mp4|woff2?|ttf|zip)$/i;
+const BINARIO = /\.(png|jpe?g|webp|gif|ico|pdf|mp4|woff2?|ttf|zip|wasm|tflite)$/i;
+// O carregador do WASM do MediaPipe (vendorizado, versão fixa) traz tabelas em base64 que parecem segredo: é o arquivo do
+// pacote npm sem alteração, com o SHA-256 anotado em vendor/mediapipe-tasks-vision@0.10.14/ORIGEM.md.
 const IGNORA = [/^package-lock\.json$/, /(^|\/)node_modules\//];
+// só é pulado enquanto for byte a byte o arquivo do pacote: mudou qualquer coisa, volta a ser varrido como os outros
+const VENDOR_CONFERIDO = { re: /^(dist\/)?vendor\/mediapipe-tasks-vision@0\.10\.14\/wasm\/vision_wasm_internal\.js$/, sha256: '9440cf0cc0cea21800e31581ec32aeedcc5fbf9df4509796bbc7d3f99e52ab9c' };
 // Arquivos que CITAM o nome do papel pra detectá-lo. Só a menção é liberada neles; os outros padrões valem.
 const CITAM = new Set(['scripts/varre-segredos.mjs', 'scripts/gera-ambiente.mjs']);
 
@@ -51,6 +56,9 @@ export async function dadosReais(caminho = `${homedir()}/.prime-dados/clientes-c
   // Contatos PÚBLICOS da própria Prime (rodapé da home) não são dado de cliente, mesmo que alguém tenha usado na base.
   const home = readFileSync(join(RAIZ, 'index.html'), 'utf8');
   for (const tel of home.match(/\(\d{2}\)\s?\d{4,5}-\d{4}/g) || []) t.delete(tel.replace(/\D/g, ''));
+  // Idem os dados PÚBLICOS da empresa (cartão CNPJ, publicados no rodapé, nas páginas legais e no recibo): CNPJ e e-mail da Prime.
+  const { EMPRESA } = await import('../src/config/seo.js');
+  t.delete(String(EMPRESA.cnpj || '').replace(/\D/g, '')); t.delete(String(EMPRESA.email || '').toLowerCase());
   return t;
 }
 
@@ -98,7 +106,8 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const git = (...a) => execFileSync('git', a, { cwd: RAIZ, encoding: 'utf8', maxBuffer: 64 << 20 });
   const sensiveis = sensiveisDoEnv();
   const reais = await dadosReais();
-  const pular = (rel) => BINARIO.test(rel) || IGNORA.some((r) => r.test(rel));
+  const conferido = (rel) => VENDOR_CONFERIDO.re.test(rel) && existsSync(join(RAIZ, rel)) && createHash('sha256').update(readFileSync(join(RAIZ, rel))).digest('hex') === VENDOR_CONFERIDO.sha256;
+  const pular = (rel) => BINARIO.test(rel) || IGNORA.some((r) => r.test(rel)) || conferido(rel);
   let total = 0; let n = 0;
   const varrer = (rel, texto, onde) => {
     n++;

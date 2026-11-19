@@ -2,7 +2,9 @@
 // B2: casca (menu lateral e inferior com "Mais"), links antigos ?aba= viram a tela nova com a mesma seção, busca única,
 // contador de solicitações e sino, menu da conta, sem rolagem lateral em 320/375/1440.
 import { criarSuite, assert } from './lib-teste.mjs';
-import { abrirNavegador, subirServidor } from './pw.mjs';
+import { abrirNavegador, subirServidor, horarioComercial } from './pw.mjs';
+import { dataNoFuso } from '../src/domain/calendario.js';
+import { CONFIG_PRECOS } from '../src/config/precos.js';
 import { CREDENCIAIS_MOCK as C } from './fixtures/seed.js';
 
 const t = criarSuite('painel v2 no navegador (mock)');
@@ -108,7 +110,13 @@ t.teste('B3 Início: o que precisa da equipe primeiro (solicitações novas e Pr
   assert.ok(titulos.includes('Meta de diárias') && !titulos.includes('Motivos de cancelamento') && !titulos.includes('Regiões mais atendidas'));
   assert.match(await p.locator('h1').innerText(), /^(Bom dia|Boa tarde|Boa noite), Equipe!$/);
   const l = linhas(p).first();
-  assert.match(await l.innerText(), /Ana Teste Fictícia[\s\S]*Savassi - BH[\s\S]*Residencial[\s\S]*R\$ 203,00/);
+  // a data do seed é relativa a hoje: R$ 203,00 em dia comum e R$ 223,00 quando cai em sábado ou feriado (taxa de R$ 20,00).
+  // O valor esperado sai da data que a própria linha mostra (em 18/11/2026 ela caía no feriado de 20/11 e o teste falhava).
+  const [dd, mm] = (await l.innerText()).match(/(\d{2})\/(\d{2})/).slice(1);
+  const hojeB3 = dataNoFuso(new Date(horarioComercial()).toISOString());
+  let dataB3 = `${hojeB3.slice(0, 4)}-${mm}-${dd}`; if (dataB3 < hojeB3) dataB3 = `${Number(hojeB3.slice(0, 4)) + 1}-${mm}-${dd}`;
+  const comTaxa = new Date(`${dataB3}T12:00:00Z`).getUTCDay() === 6 || CONFIG_PRECOS.feriados.includes(dataB3);
+  assert.match(await l.innerText(), new RegExp(`Ana Teste Fictícia[\\s\\S]*Savassi - BH[\\s\\S]*Residencial[\\s\\S]*R\\$ ${comTaxa ? '223' : '203'},00`), `data ${dataB3}`);
   await l.getByRole('button', { name: /^Ver detalhes de/ }).click();
   await p.waitForFunction(() => /Nº da solicitação|Modalidade|Datas/.test(document.querySelector('[data-bloco=inicio-solicitacoes] tr.p-det')?.textContent || ''));
   assert.match(await p.locator('[data-bloco=inicio-solicitacoes] tr.p-det').innerText(), /Datas[\s\S]*Endereço/);
