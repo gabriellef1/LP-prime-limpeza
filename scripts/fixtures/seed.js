@@ -62,12 +62,17 @@ export function montarSeed(hoje, cfg) {
   const c2 = { id: '00000000-0000-4000-8000-00000000c002', ...CLIENTE_EMPRESA };
   const d1 = { id: '00000000-0000-4000-8000-00000000d001', ...DIARISTA_FICTICIA, identidade: 'cnh', documentos: [], status: 'aprovada' };
   const d2 = { id: '00000000-0000-4000-8000-00000000d002', ...DIARISTA_PENDENTE, identidade: 'rg', documentos: [], status: 'pendente' };
+  // a avulsa cai em dia sem taxa; o pacote começa no dia permitido seguinte, pra a avulsa ser sempre a primeira da lista
+  const avulsa = proximaDataSemTaxa(hoje, 2, cfg);
   return {
     clientes: [c1, c2],
     diaristas: [d1, d2],
     pedidos: [
-      { clienteId: c1.id, pacote: { tipoServico: 'residencial', duracaoHoras: 6, metragem: 70, quantidadeDiarias: 1, frequencia: 'avulso' }, primeiraData: proximaDataPermitida(hoje, 2, cfg), turno: 'manha' },
-      { clienteId: c2.id, pacote: { tipoServico: 'empresarial', duracaoHoras: 4, metragem: 90, quantidadeDiarias: 4, frequencia: 'semanal' }, primeiraData: proximaDataPermitida(hoje, 3, cfg), turno: 'tarde' },
+      { clienteId: c1.id, pacote: { tipoServico: 'residencial', duracaoHoras: 6, metragem: 70, quantidadeDiarias: 1, frequencia: 'avulso' },
+        // dia sem taxa (nem sábado nem feriado): a diarista do seed trabalha de segunda a sexta e o valor esperado nos testes é o
+        // de dia comum. Com "hoje + 2" puro, toda quinta (cai no sábado) e véspera de feriado quebravam testes que não eram sobre data.
+        primeiraData: avulsa, turno: 'manha' },
+      { clienteId: c2.id, pacote: { tipoServico: 'empresarial', duracaoHoras: 4, metragem: 90, quantidadeDiarias: 4, frequencia: 'semanal' }, primeiraData: proximaDataPermitida(avulsa, 1, cfg), turno: 'tarde' },
     ],
   };
 }
