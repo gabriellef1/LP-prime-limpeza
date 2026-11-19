@@ -33,8 +33,14 @@ export async function criarAdapterMock({ nomeBanco } = {}) {
     const hoje = casos.hoje();
     let plantado = null; try { plantado = localStorage.getItem(CHAVE_DIA_DEMO); } catch { /* sem storage: segue */ }
     if (plantado !== `${SEED_DEMO}:${hoje}`) {
-      if (!(await casos.estaVazio())) await repo.transacao(null, async (tx) => { for (const n of NOMES_STORES) await tx.limpar(n); });
+      // a marca vai antes da limpeza: outra aba aberta ao mesmo tempo já encontra o dia marcado e não limpa de novo
       try { localStorage.setItem(CHAVE_DIA_DEMO, `${SEED_DEMO}:${hoje}`); } catch { /* ignora */ }
+      if (!(await casos.estaVazio())) {
+        await repo.transacao(null, async (tx) => { for (const n of NOMES_STORES) await tx.limpar(n); });
+        // quem estava logada com um cadastro criado na demonstração (cliente ou profissional) sai: o cadastro não existe mais.
+        // As contas da equipe (prime) são do seed, com id fixo, e continuam valendo.
+        try { if (JSON.parse(localStorage.getItem('prime.sessao') || 'null')?.ator !== 'prime') localStorage.removeItem('prime.sessao'); } catch { /* ignora */ }
+      }
     }
   }
   // Seed só com storage vazio.

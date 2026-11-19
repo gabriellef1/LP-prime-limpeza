@@ -40,7 +40,7 @@ async function conferirCheia(p, data, rotulo) {
   const grupos = await p.locator('body').innerText();
   for (const g of ['Contagem', 'Betim', 'Belo Horizonte']) assert.ok(grupos.includes(g), `${rotulo}: grupo ${g}`);
   for (const s of ['Para revisar', 'Revisada', 'Aguardando aceite', 'Confirmada', 'Em andamento', 'Finalizada']) assert.ok(new RegExp(s, 'i').test(grupos), `${rotulo}: status "${s}" no dia`);
-  assert.equal(await linhasAgenda(p, `painel/?tela=agenda&data=${somarDias(data, 1)}`) >= 0, true);
+  assert.equal(await linhasAgenda(p, `painel/?tela=agenda&data=${somarDias(data, 1)}`), 9, `${rotulo}: Agenda de amanhã com 9 diárias`);
   const semanaAnterior = somarDias(data, -((diaDaSemana(data) + 6) % 7) - 7);
   assert.ok(await linhasAgenda(p, `painel/?tela=agenda&vista=periodo&de=${semanaAnterior}&ate=${somarDias(semanaAnterior, 6)}`) >= 30, `${rotulo}: período da semana anterior com histórico`);
   assert.ok(await linhasAgenda(p, `painel/?tela=agenda&vista=periodo&de=${data}&ate=${somarDias(data, 6)}`) >= 40, `${rotulo}: período dos próximos 7 dias`);
@@ -75,6 +75,12 @@ t.teste('o mesmo navegador volta 9 dias depois (e num domingo): a demonstração
   }
   // no mesmo dia nada é refeito: o que a pessoa mexeu na demonstração continua lá ao recarregar
   assert.equal(await p.evaluate(() => localStorage.getItem('prime.demo.dia')), 'agenda:2026-11-22');
+  await p.goto(`${base}painel/?tela=agenda`); await p.waitForSelector('tr.ae-lin');
+  const antes = await p.locator('tr.ae-lin', { hasText: 'Para revisar' }).count();
+  await p.locator('tr.ae-lin').getByRole('button', { name: /^Revisar a diária/ }).first().click();
+  await p.waitForFunction((n) => [...document.querySelectorAll('tr.ae-lin')].filter((l) => /Para revisar/.test(l.innerText)).length === n - 1, antes);
+  await p.reload(); await p.waitForSelector('tr.ae-lin');
+  assert.equal(await p.locator('tr.ae-lin', { hasText: 'Para revisar' }).count(), antes - 1, 'a revisão feita continua depois de recarregar');
   await ctx.close();
 });
 
