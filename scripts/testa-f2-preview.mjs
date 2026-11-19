@@ -179,8 +179,10 @@ t.teste('diarista nova: conta no passo 1, documentos pela function, envio; Prime
   await avancar(p);
   await p.waitForFunction(() => /Documentos/.test(document.querySelector('#titulo-passo')?.textContent || ''));
   await marcar(p, 'input[name=identidade][value=cnh]');
+  // SELFIE=<foto de rosto fora do repo>: exercita o recorte de verdade; sem ela vai a foto fictícia (sem rosto), que cai no "sem recorte"
+  const selfie = process.env.SELFIE || null;
   for (const [tipo, arq] of [['cnh_frente', 'foto-ficticia.png'], ['cnh_verso', 'foto-ficticia.png'], ['foto_perfil', 'foto-ficticia.png'], ['comprovante_residencia', 'documento-ficticio.pdf'], ['antecedentes', 'documento-ficticio.pdf']]) {
-    await p.locator(`#doc-${tipo}`).setInputFiles(`scripts/fixtures/${arq}`);
+    await p.locator(`#doc-${tipo}`).setInputFiles(tipo === 'foto_perfil' && selfie ? selfie : `scripts/fixtures/${arq}`);
     await p.waitForSelector(`[data-doc=${tipo}][data-estado=ok]`, { timeout: 30000 });
   }
   assert.equal(await p.locator('[data-doc=foto_perfil] .previa img').count(), 1, 'prévia da própria foto nesta página');
@@ -192,6 +194,9 @@ t.teste('diarista nova: conta no passo 1, documentos pela function, envio; Prime
     from public.diaristas d where d.email = $1`, [S.dia.email]);
   assert.deepEqual([d.status, d.ficticio, d.docs], ['pendente', true, 5]);
   S.dia.id = d.id;
+  // foto de perfil: só a versão final do navegador fica guardada (JPEG), com o aviso de sem recorte quando o recorte falhou
+  const [f] = await sql(`select mime, nome_arquivo, sem_recorte from public.documentos where diarista_id = $1 and tipo = 'foto_perfil' and excluido_em is null`, [d.id]);
+  assert.deepEqual([f.mime, f.nome_arquivo, f.sem_recorte], selfie ? ['image/jpeg', 'foto-perfil.jpg', false] : ['image/jpeg', 'foto-perfil-sem-recorte.jpg', true]);
   const pp = S.prime.p;
   await painel(pp, 'cadastros');
   const bloco = pp.locator(`[data-diarista="${d.id}"]`).first();
