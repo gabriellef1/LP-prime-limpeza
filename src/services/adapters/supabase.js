@@ -63,8 +63,8 @@ export function criarAdapterSupabase({ cliente, clientePara, provaHumana = async
         const { itens } = await funcao('documentos', { acao: 'fotos' }, o);
         const vivos = new Set(itens.map((x) => x.diaristaId));
         for (const id of [...fotos.mapa.keys()]) if (!vivos.has(id)) { URL.revokeObjectURL(fotos.mapa.get(id)); fotos.mapa.delete(id); fotos.versoes.delete(id); }
-        await Promise.all(itens.filter((x) => fotos.versoes.get(x.diaristaId) !== x.versao).map(async (x) => {
-          const r = await fetch(x.url); if (!r.ok) return;
+        await Promise.allSettled(itens.filter((x) => fotos.versoes.get(x.diaristaId) !== x.versao).map(async (x) => {
+          const r = await fetch(x.url, { signal: AbortSignal.timeout(8000) }); if (!r.ok) return;
           const antiga = fotos.mapa.get(x.diaristaId); if (antiga) URL.revokeObjectURL(antiga);
           fotos.mapa.set(x.diaristaId, URL.createObjectURL(await r.blob())); fotos.versoes.set(x.diaristaId, x.versao);
         }));
@@ -76,7 +76,9 @@ export function criarAdapterSupabase({ cliente, clientePara, provaHumana = async
   }
   /** Põe `foto` em quem é profissional na resposta (tem diaristaId, está na chave `profissional` ou é item de candidatas). */
   async function comFotos(resposta, o, { itensSaoProfissionais = false } = {}) {
-    const mapa = await mapaDeFotos(o);
+    // as fotos nunca seguram a tela: se a lista demorar mais de 2,5 s a resposta sai com as que já estão na memória
+    // (as outras aparecem na próxima carga)
+    const mapa = await Promise.race([mapaDeFotos(o), new Promise((ok) => { setTimeout(() => ok(fotos.mapa), 2500); })]);
     if (!mapa.size) return resposta;
     const ver = (x, chave) => {
       if (!x || typeof x !== 'object') return;

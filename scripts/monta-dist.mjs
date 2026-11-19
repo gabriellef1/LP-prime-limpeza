@@ -32,9 +32,7 @@ export function hashesInline(html) {
 export function montarHeaders({ ref, scripts, handlers, analytics = false }) {
   const supa = ref ? ` https://${ref}.supabase.co wss://${ref}.supabase.co` : '';
   // P7: script do Turnstile por último (a ordem dos hashes é a que o teste do B0 confere)
-  const scriptSrc = ["'self'", ...new Set(scripts), ...(handlers.length ? ["'unsafe-hashes'", ...new Set(handlers)] : []),
-    "'wasm-unsafe-eval'", // foto de perfil da profissional: o recorte do fundo roda em WebAssembly (vendor/mediapipe-tasks-vision); não libera eval de JS
-    'https://challenges.cloudflare.com',
+  const scriptSrc = ["'self'", ...new Set(scripts), ...(handlers.length ? ["'unsafe-hashes'", ...new Set(handlers)] : []), 'https://challenges.cloudflare.com',
     ...(analytics ? ['https://static.cloudflareinsights.com'] : [])].join(' '); // O1: Web Analytics só com o token
   const csp = [
     "default-src 'self'", `script-src ${scriptSrc}`, "style-src 'self' 'unsafe-inline'",
@@ -42,6 +40,9 @@ export function montarHeaders({ ref, scripts, handlers, analytics = false }) {
     'frame-src https://challenges.cloudflare.com', // P7: caixinha do Turnstile
     "frame-ancestors 'none'", "base-uri 'self'", "form-action 'self'", "object-src 'none'",
   ].join('; ');
+  // Foto de perfil da profissional: o recorte do fundo roda em WebAssembly (vendor/mediapipe-tasks-vision). Só a página do
+  // cadastro ganha 'wasm-unsafe-eval' (compila WASM; não libera eval de JS): a regra dela tira a CSP geral e põe a própria.
+  const cspCadastro = csp.replace("script-src 'self'", "script-src 'self' 'wasm-unsafe-eval'");
   return [
     '/*',
     `  Content-Security-Policy: ${csp}`,
@@ -53,6 +54,11 @@ export function montarHeaders({ ref, scripts, handlers, analytics = false }) {
     // subdomínios do domínio da Prime no go-live (PENDENCIAS). COOP isola a janela de páginas abertas por outro site.
     '  Strict-Transport-Security: max-age=31536000',
     '  Cross-Origin-Opener-Policy: same-origin',
+    '',
+    '# Cadastro da profissional: tira a CSP geral (regra de cima) e põe a que deixa compilar o WASM do recorte da foto.',
+    '/diarista/cadastro/*',
+    '  ! Content-Security-Policy',
+    `  Content-Security-Policy: ${cspCadastro}`,
     '',
     '# Preview (*.pages.dev) inteiro fora do Google, inclusive o alias da branch.',
     'https://:project.pages.dev/*', '  X-Robots-Tag: noindex', '',

@@ -47,6 +47,8 @@ export function campoUpload({ tipo, existente, aoEscolher, obterPrevia, soFoto =
     const msg = validarArquivo({ nome: file.name, mime: file.type, tamanho: file.size, cabecalho }) || (soFoto && file.type === 'application/pdf' ? 'Envie uma foto em JPG ou PNG' : null);
     if (msg) { erro.textContent = msg; raiz.classList.add('invalido'); raiz.dataset.estado = 'invalido'; input.value = ''; return; }
     erro.textContent = ''; raiz.classList.remove('invalido');
+    // enquanto este arquivo é preparado e enviado não dá pra escolher outro (o primeiro poderia terminar depois e ficar no lugar do último)
+    input.disabled = true; raiz.dataset.estado = 'enviando';
     botao.setAttribute('aria-busy', 'true'); botao.textContent = soFoto ? 'Preparando a foto…' : 'Enviando…';
     try {
       const r = await aoEscolher({ file, cabecalho });
@@ -60,7 +62,7 @@ export function campoUpload({ tipo, existente, aoEscolher, obterPrevia, soFoto =
       erro.textContent = e?.message || 'Não foi possível guardar o arquivo. Tente de novo.';
       raiz.classList.add('invalido'); raiz.dataset.estado = 'invalido';
       botao.textContent = existente || raiz.classList.contains('ok') ? 'Trocar arquivo' : 'Escolher arquivo';
-    } finally { botao.removeAttribute('aria-busy'); input.value = ''; }
+    } finally { botao.removeAttribute('aria-busy'); input.disabled = false; input.value = ''; }
   });
   return { raiz, erro: (m) => { erro.textContent = m || ''; raiz.classList.toggle('invalido', !!m); }, input };
 }

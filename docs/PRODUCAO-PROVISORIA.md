@@ -58,7 +58,7 @@ Conferido em 18/11/2026 no Supabase local (dentro de transação desfeita): com 
 
 ## 5. Endereço provisório
 `prime-limpeza.pages.dev` hoje mostra a main ligada ao **homolog** e é o que a cliente usa pra aprovar telas. Duas saídas:
-- **Projeto Pages novo só pra produção** (recomendado), por exemplo `prime-producao` > `prime-producao.pages.dev`. O homolog continua onde está; no fim o domínio é ligado nesse projeto novo. O `scripts/go-live/14-deploy-pages.sh` hoje publica no projeto `prime-limpeza`: precisa aceitar o nome do projeto antes de usar (mudança pequena, não feita).
+- **Projeto Pages novo só pra produção** (recomendado), por exemplo `prime-producao` > `prime-producao.pages.dev`. O homolog continua onde está; no fim o domínio é ligado nesse projeto novo. O `scripts/go-live/14-deploy-pages.sh` hoje publica no projeto `prime-limpeza`: precisa aceitar o nome do projeto antes de usar (mudança pequena, não feita). **Antes de usar outro endereço:** as Edge Functions só respondem pra origens conhecidas (a lista `ORIGENS` das functions `documentos` e `conta` só aceita `*.prime-limpeza.pages.dev` e localhost); o endereço novo e o domínio final têm que entrar nessa lista, senão upload de documento e foto falham por CORS.
 - **Reaproveitar `prime-limpeza.pages.dev`** como produção e levar o homolog pra um alias (`homolog.prime-limpeza.pages.dev`). Menos coisa pra criar, mas o endereço que a cliente já conhece muda de banco.
 
 Deploy a partir da main: `GO_LIVE=sim PROD_REF=<ref> bash scripts/go-live/14-deploy-pages.sh`. Conferir: `node scripts/confere-config.mjs --url <endereço provisório>`.

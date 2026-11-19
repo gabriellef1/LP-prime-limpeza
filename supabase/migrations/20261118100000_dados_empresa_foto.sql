@@ -30,14 +30,16 @@ language sql immutable set search_path = '' as $$
     || case when x.tipo = 'foto_perfil' then jsonb_build_object('semRecorte', x.sem_recorte) else '{}'::jsonb end
 $$;
 
--- igual à versão vigente (20260924210300), mais o sem_recorte no insert
+-- igual à versão vigente (20260924210300), mais o sem_recorte no insert e no conteúdo da idempotência (só pra foto de perfil)
 create or replace function public.registrar_documento(p_dados jsonb, p_chave text) returns jsonb
 language plpgsql security definer set search_path = '' as $$
 declare s jsonb := privado.ator(); r jsonb; d public.diaristas; x public.documentos; conteudo jsonb; did uuid; v_caminho text; meta jsonb;
         v_tipo text := coalesce(p_dados ->> 'tipo', ''); v_ext text; v_mime text; v_tam int; v_hash text := p_dados ->> 'hashSha256';
 begin
   conteudo := jsonb_build_object('diaristaId', p_dados -> 'diaristaId', 'tipo', p_dados -> 'tipo', 'nomeArquivo', p_dados -> 'nomeArquivo',
-    'hashSha256', p_dados -> 'hashSha256');
+    'hashSha256', p_dados -> 'hashSha256')
+    -- o aviso de "sem recorte" faz parte do pedido: repetir a chave mudando o aviso é conflito, não a resposta antiga
+    || case when v_tipo = 'foto_perfil' then jsonb_build_object('semRecorte', coalesce(p_dados ->> 'semRecorte', '') = 'true') else '{}'::jsonb end;
   if v_tipo not in ('rg_frente', 'rg_verso', 'cnh_frente', 'cnh_verso', 'cpf', 'comprovante_residencia', 'foto_perfil', 'antecedentes') then perform privado.erro('DADOS_INVALIDOS', 'Tipo de documento inválido'); end if;
   did := privado.uuid_ou_nulo(p_dados ->> 'diaristaId');
   if did is null then perform privado.erro('DADOS_INVALIDOS', 'Id do cadastro inválido'); end if;

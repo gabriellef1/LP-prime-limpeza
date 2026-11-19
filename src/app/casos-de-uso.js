@@ -865,7 +865,7 @@ export function criarCasosDeUso({ repo: repoBase, relogio, gerarId, bytesAleator
       tamanho = tamanhoReal;
       const erro = validarArquivo({ nome: nomeArquivo, mime, tamanho, cabecalho: cabecalho || new Uint8Array() });
       if (erro) throw new ErroNegocio('DADOS_INVALIDOS', erro, { arquivo: erro });
-      return repo.transacao(TODOS, (tx) => idem(tx, 'salvarDocumento', sessao, chave, { diaristaId, tipo, nomeArquivo, mime, tamanho }, async () => {
+      return repo.transacao(TODOS, (tx) => idem(tx, 'salvarDocumento', sessao, chave, { diaristaId, tipo, nomeArquivo, mime, tamanho, ...(tipo === 'foto_perfil' ? { semRecorte: semRecorte === true } : {}) }, async () => {
         const existe = await tx.get('diaristas', diaristaId);
         if (existe && sessao?.ator !== 'prime') throw new ErroNegocio('ATOR_SEM_PERMISSAO', 'Cadastro já enviado; fale com a Prime pra trocar documentos');
         for (const d of await tx.por('documentos', 'diaristaId', diaristaId)) {

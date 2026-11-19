@@ -26,6 +26,7 @@ function carregar() {
   return carregando;
 }
 
+const pausa = () => new Promise((ok) => { setTimeout(ok, 0); });
 const tela = (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; };
 const suave = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
 
@@ -83,9 +84,13 @@ function mascaraDePessoa(res, rosto) {
 
 async function recortar(img, limite) {
   const { rosto: detector, pessoa } = await limite(carregar(), 'carregar');
+  // detecção e segmentação rodam direto na thread principal (centenas de ms; mais em celular fraco) e não dá pra
+  // interromper no meio: o prazo vale pro carregamento (a parte longa) e entre as etapas. Antes de cada uma a tela respira.
+  await pausa();
   const rosto = maiorRosto(detector.detect(img));
   if (!rosto) return { falha: 'rosto não encontrado', rosto: null };
   if (rosto.w < img.width * 0.08) return { falha: 'rosto pequeno demais na foto', rosto };
+  await pausa();
   const res = pessoa.segment(img); res.__larg = img.width; res.__alt = img.height;
   const m = mascaraDePessoa(res, rosto);
   res.close?.();
