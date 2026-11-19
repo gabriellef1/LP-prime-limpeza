@@ -5,11 +5,13 @@ import { criarRepoIndexedDB } from '../../app/repo-indexeddb.js';
 import { criarMotorLocal } from '../../automacoes/v2/local.js';
 import { criarRelogio } from '../../automacoes/relogio.js';
 import { CONFIG_PRECOS } from '../../config/precos.js';
+import { NOMES_STORES } from '../../app/stores.js';
 import { configPrime, RAIZ, modoDev, SEED_DEMO } from '../../config/app.js';
 import { VERSAO_LEGAL } from '../../config/legal.js';
 import { ErroNegocio } from '../../domain/modelo.js';
 
 const CHAVE_RELOGIO = 'prime.relogio.deslocamento';
+const CHAVE_DIA_DEMO = 'prime.demo.dia'; // "<seed>:<AAAA-MM-DD>" do dia em que a demonstração foi plantada neste navegador
 
 export async function criarAdapterMock({ nomeBanco } = {}) {
   const repo = await criarRepoIndexedDB(nomeBanco);
@@ -24,6 +26,17 @@ export async function criarAdapterMock({ nomeBanco } = {}) {
   const casos = criarCasosDeUso(deps);
   const motor = criarMotorLocal({ repo: deps.repo, relogio: deps.relogio, gerarId: deps.gerarId, cfg: deps.cfg, urlSite: RAIZ.href }); // AUT: motor v2
 
+  // DEMONSTRAÇÃO (SEED_DEMO): os dados moram no navegador de quem visita e as datas são relativas ao dia em que foram
+  // plantados. Sem renovar, quem voltava dias depois encontrava a Agenda e o Início vazios (bug relatado pela cliente em
+  // 19/11/2026). Quando o dia muda, a demonstração recomeça do zero com as datas de hoje (o que foi feito nela não fica).
+  if (SEED_DEMO) {
+    const hoje = casos.hoje();
+    let plantado = null; try { plantado = localStorage.getItem(CHAVE_DIA_DEMO); } catch { /* sem storage: segue */ }
+    if (plantado !== `${SEED_DEMO}:${hoje}`) {
+      if (!(await casos.estaVazio())) await repo.transacao(null, async (tx) => { for (const n of NOMES_STORES) await tx.limpar(n); });
+      try { localStorage.setItem(CHAVE_DIA_DEMO, `${SEED_DEMO}:${hoje}`); } catch { /* ignora */ }
+    }
+  }
   // Seed só com storage vazio.
   if (await casos.estaVazio()) {
     const { montarSeed } = await import('../../../scripts/fixtures/seed.js');

@@ -43,6 +43,7 @@ export async function criarRepoIndexedDB(nome = NOME_DB) {
         get: (s, id) => req(t.objectStore(s).get(id)),
         put: (s, obj) => req(t.objectStore(s).put(obj)).then(() => obj),
         del: (s, id) => req(t.objectStore(s).delete(id)),
+        limpar: (s) => req(t.objectStore(s).clear()),
         todos: (s) => req(t.objectStore(s).getAll()),
         por: (s, indice, valor) => req(t.objectStore(s).index(indice).getAll(valor)),
       };

@@ -1,9 +1,13 @@
 // Seed de DEMONSTRAÇÃO da Agenda e Escala (SEED_DEMO=agenda). Tudo inventado; os nomes seguem as imagens de referência
 // da cliente (Prime_Limpeza/agenda-escala), com os avatares ilustrados fictícios de assets/painel no lugar da foto (nenhuma
-// foto de pessoa real; o Carlos fica sem, pra mostrar as iniciais). Datas relativas a hoje: o dia de hoje fica
-// igual à imagem principal (11 diárias em Contagem, Betim e Belo Horizonte, stand-by, fixas, sugeridas, sem
-// profissional) e a semana tem diárias passadas (finalizadas, cancelada, com ocorrência) e futuras (enviada sem
-// resposta, aguardando aceite, confirmada, recusada). Prazo de "sem resposta" configurado em 2 horas só na demonstração.
+// foto de pessoa real; o Carlos fica sem, pra mostrar as iniciais). Datas SEMPRE relativas a hoje, em qualquer dia
+// (sábado, domingo e feriado também: é demonstração, não a regra de agenda da Prime):
+// - hoje: as 11 diárias da imagem principal (Contagem, Betim e Belo Horizonte), em situações variadas (para revisar,
+//   revisada, aguardando aceite, confirmada, em andamento, finalizada, com ocorrência, sem profissional) e o stand-by;
+// - amanhã: 9 diárias; os 8 dias seguintes: enviada sem resposta, aguardando aceite, confirmada, recusada;
+// - histórico desde o dia 1º do mês passado (finalizadas, canceladas com motivo, ocorrência): semana, período, meta,
+//   motivos de cancelamento e regiões têm o que mostrar; e cadastros novos sem solicitação.
+// O mock renova tudo quando o dia muda (src/services/adapters/mock.js). Prazo de "sem resposta" de 2 horas só na demonstração.
 import { somarDias, diaDaSemana } from '../../src/domain/calendario.js';
 
 const PROF = [
@@ -42,15 +46,30 @@ const HOJE = [
   [0, '08:00', 6, 'residencial', 0, 'fixa', true, 'revisada', true],
   [1, '10:00', 4, 'empresarial', 1, 'sugerida', false, 'para_revisar', false],
   [2, '13:00', 4, 'residencial', 2, 'sugerida', true, 'revisada', true],
-  [3, '16:00', 6, 'residencial', 3, 'manual', false, 'para_revisar', false],
+  [3, '16:00', 6, 'residencial', 3, 'manual', false, 'para_revisar', false, 'confirmada'],
   [4, '09:00', 6, 'residencial', 4, 'fixa', true, 'revisada', true],
-  [5, '14:00', 4, 'empresarial', 5, 'sugerida', false, 'para_revisar', false],
-  [6, '08:00', 6, 'residencial', 6, 'fixa', true, 'revisada', true],
+  [5, '14:00', 4, 'empresarial', 5, 'sugerida', false, 'para_revisar', false, 'aguardando_aceite'],
+  [6, '08:00', 6, 'residencial', 6, 'fixa', true, 'revisada', true, 'finalizada'],
   [7, '09:30', 4, 'residencial', 7, 'sugerida', false, 'para_revisar', true],
-  [8, '11:00', 8, 'residencial', 8, 'sugerida', true, 'revisada', false],
+  [8, '11:00', 8, 'residencial', 8, 'sugerida', true, 'revisada', false, 'em_andamento'],
   [9, '14:00', 6, 'pre_pos_evento', null, null, false, 'para_revisar', false],
-  [10, '16:00', 6, 'residencial', 1, 'sugerida', true, 'revisada', true],
+  [10, '16:00', 6, 'residencial', 1, 'sugerida', true, 'revisada', true, 'ocorrencia'],
 ];
+// 10º campo de HOJE: situação que já andou no dia (o resto segue em "para revisar" ou "revisada", como na imagem)
+const SITUACAO_HOJE = {
+  finalizada: (agoraISO) => ({ status: 'finalizado', escala: 'confirmada', envio: { enviadaEm: agoraISO(-1500), canal: 'whatsapp', versao: 1, resposta: 'aceite', respondidaEm: agoraISO(-1450) } }),
+  em_andamento: (agoraISO) => ({ status: 'em_andamento', escala: 'confirmada', envio: { enviadaEm: agoraISO(-1400), canal: 'whatsapp', versao: 1, resposta: 'aceite', respondidaEm: agoraISO(-1380) } }),
+  ocorrencia: (agoraISO) => ({ ocorrencia: true, escala: 'confirmada', envio: { enviadaEm: agoraISO(-1300), canal: 'whatsapp', versao: 1, resposta: 'aceite', respondidaEm: agoraISO(-1250) } }),
+  confirmada: (agoraISO) => ({ escala: 'confirmada', envio: { enviadaEm: agoraISO(-600), canal: 'whatsapp', versao: 1, resposta: 'aceite', respondidaEm: agoraISO(-560) } }),
+  aguardando_aceite: (agoraISO) => ({ escala: 'aguardando_aceite', envio: { enviadaEm: agoraISO(-40), canal: 'whatsapp', versao: 1, entregueEm: agoraISO(-39) } }),
+};
+// cancelamentos do histórico: motivos da lista padrão do painel (código e rótulo), pra o indicador ter o que agrupar
+const MOTIVOS_CANCELAMENTO = [['pedido_cliente', 'Pedido da cliente'], ['sem_profissional', 'Sem profissional disponível'], ['pedido_cliente', 'Pedido da cliente'],
+  ['pagamento_nao_identificado', 'Pagamento não identificado no prazo'], ['imprevisto_local', 'Imprevisto no local (sem água, sem energia)'], ['pedido_cliente', 'Pedido da cliente'], ['outro', 'Outro']];
+// cadastros feitos pelo site que ainda não viraram solicitação (bloco "Novos cadastros" do Início)
+const NOVOS_CADASTROS = [['Ana Clara Moura', 'Savassi', 'Belo Horizonte'], ['Bruno Lopes', 'Eldorado', 'Contagem'], ['Rafaela Martins', 'Centro', 'Betim'], ['Sílvia Prado', 'Buritis', 'Belo Horizonte']];
+const DIARIAS_AMANHA = 9;
+const DIAS_A_FRENTE = 8;
 const CONTAGEM_SEMANA = { 1: 8, 2: 10, 3: 11, 4: 9, 5: 7, 6: 5, 0: 0 }; // Seg..Dom, como na imagem
 const HORAS = ['08:00', '09:00', '10:00', '12:00', '13:00', '14:00', '16:00', '08:30', '11:00', '15:00'];
 
@@ -63,7 +82,7 @@ export function montarSeedAgenda(hoje, { agoraISO }) {
   let numero = 10300;
   const dias = PROF.map(([nome, nota, habilidades, regioes], i) => {
     const d = { id: id('d'), nome, cpf: `100000000${i}`.slice(-11), telefone: `3198${String(8100000 + i * 1373).slice(0, 7)}`, email: `agenda.prof${i}@exemplo.com`, dataNascimento: '1986-03-12',
-      status: 'aprovada', identidade: 'rg', documentos: [], habilidades, disponibilidade: { dias: [1, 2, 3, 4, 5, 6], turnos: ['integral'], regioes }, criadoEm: iso(somarDias(hoje, -300)), notaDemo: nota,
+      status: 'aprovada', identidade: 'rg', documentos: [], habilidades, disponibilidade: { dias: [0, 1, 2, 3, 4, 5, 6], turnos: ['integral'], regioes }, criadoEm: iso(somarDias(hoje, -300)), notaDemo: nota,
       foto: nome.startsWith('Carlos') ? null : `assets/painel/avatar-${(i % 6) + 1}.svg` };
     r.diaristas.push(d); return d;
   });
@@ -82,9 +101,10 @@ export function montarSeedAgenda(hoje, { agoraISO }) {
   };
 
   /** Pedido (avulso ou pacote) com as diárias dadas: [{data, hora, horas, prof, origem, escala, status, pago, envio, ocorrencia}] */
-  function pedido(cliente, servico, diarias, { pacote = false } = {}) {
+  function pedido(cliente, servico, diarias, { pacote = false, cancelamento = null } = {}) {
     const p = { id: id('p'), clienteId: cliente.id, numeroSolicitacao: ++numero, modalidade: pacote ? 'pacote' : 'avulsa', origemCliente: null, pacoteEnderecoNovo: false,
-      status: diarias.every((x) => x.pago) ? 'confirmado' : 'aguardando_pagamento',
+      status: cancelamento ? 'cancelado' : diarias.every((x) => x.pago) ? 'confirmado' : 'aguardando_pagamento',
+      ...(cancelamento ? { cancelamento: { em: iso(somarDias(diarias[0].data, -1), '16:00'), ator: 'prime', motivo: cancelamento[1], codigo: cancelamento[0], atendimentosCancelados: [] } } : {}),
       pacote: { tipoServico: servico, duracaoHoras: diarias[0].horas, quantidadeDiarias: diarias.length, frequencia: pacote ? 'semanal' : 'avulso', totalCentavos: VALOR[diarias[0].horas] * diarias.length, metragem: cliente.imovelDemo.metragem },
       endereco: cliente.endereco, historico: [{ de: 'rascunho', para: 'solicitado', evento: 'solicitar', em: iso(somarDias(diarias[0].data, -8), '10:00'), ator: 'cliente' }], criadoEm: iso(somarDias(diarias[0].data, -8), '10:00') };
     r.pedidos.push(p);
@@ -107,28 +127,31 @@ export function montarSeedAgenda(hoje, { agoraISO }) {
     return { p, ats };
   }
 
-  // ---------- hoje: igual à imagem 1 (os pacotes têm a mesma diária na semana seguinte)
-  const diaD = diaDaSemana(hoje) === 0 ? somarDias(hoje, 1) : hoje;
-  HOJE.forEach(([ci, hora, horas, servico, prof, origem, pago, escala, pacote]) => {
-    const linha = { data: diaD, hora, horas, prof, origem, pago, escala };
-    const { p } = pedido(clientes[ci], servico, pacote ? [linha, { ...linha, data: somarDias(diaD, 7), escala: 'para_revisar', pago }] : [linha], { pacote });
+  // ---------- hoje: as 11 diárias da imagem 1, em qualquer dia da semana (os pacotes têm a mesma diária na semana seguinte)
+  const diaD = hoje;
+  const amanha = somarDias(hoje, 1);
+  HOJE.forEach(([ci, hora, horas, servico, prof, origem, pago, escala, pacote, situacao]) => {
+    const linha = { data: diaD, hora, horas, prof, origem, pago, escala, ...(situacao ? SITUACAO_HOJE[situacao](agoraISO) : {}) };
+    const { p } = pedido(clientes[ci], servico, pacote ? [linha, { data: somarDias(diaD, 7), hora, horas, prof, origem, pago, escala: 'para_revisar' }] : [linha], { pacote });
     if (origem === 'fixa') r.vinculosFixos.push({ id: id('f'), pedidoId: p.id, diaSemana: diaDaSemana(diaD), diaristaId: dias[prof].id, vigenteDesde: iso(somarDias(hoje, -30)), encerradoEm: null, criadoPor: 'seed' });
   });
-  // ---------- o resto da semana (contagens como na imagem): passadas finalizadas, futuras em várias situações
-  const segunda = somarDias(diaD, -((diaDaSemana(diaD) + 6) % 7));
-  for (let i = -7; i < 7; i++) { // semana anterior (histórico) e a semana do dia
-    const data = somarDias(segunda, i);
+  // ---------- o resto: do dia 1º do mês passado até 8 dias à frente. Passadas finalizadas (com cancelada e ocorrência),
+  // futuras em várias situações. Volume por dia da semana como na imagem; amanhã tem sempre 9, seja o dia que for.
+  const inicio = new Date(Date.UTC(Number(hoje.slice(0, 4)), Number(hoje.slice(5, 7)) - 2, 1)).toISOString().slice(0, 10);
+  let cancelados = 0;
+  for (let data = inicio, i = 0; data <= somarDias(hoje, DIAS_A_FRENTE); data = somarDias(data, 1), i++) {
     if (data === diaD) continue;
-    const total = CONTAGEM_SEMANA[diaDaSemana(data)];
+    const total = data === amanha ? DIARIAS_AMANHA : CONTAGEM_SEMANA[diaDaSemana(data)];
     for (let k = 0; k < total; k++) {
-      const ci = (((k + i * 3) % CLI.length) + CLI.length) % CLI.length; const c = clientes[ci];
+      const ci = (k + i * 3) % CLI.length; const c = clientes[ci];
       const passado = data < hoje;
       const x = { data, hora: HORAS[k % HORAS.length], horas: [4, 6, 4, 8][k % 4], prof: k % dias.length, origem: k % 3 === 0 ? 'fixa' : 'sugerida', pago: true };
+      let cancelamento = null;
       if (passado) {
-        if (k === 3) x.status = 'cancelado';
-        if (k === 2) { x.status = 'finalizado'; x.ocorrencia = true; }
+        if (k === 3 && i % 3 === 0) { x.status = 'cancelado'; cancelamento = MOTIVOS_CANCELAMENTO[cancelados++ % MOTIVOS_CANCELAMENTO.length]; }
+        if (k === 2 && i % 4 === 0) { x.status = 'finalizado'; x.ocorrencia = true; }
       } else {
-        const sit = (((k + i) % 6) + 6) % 6;
+        const sit = (k + i) % 6;
         x.pago = sit !== 3;
         if (sit === 0) { x.escala = 'enviada'; x.envio = { enviadaEm: agoraISO(-180), canal: 'whatsapp', versao: 1 }; } // sem resposta há 3 h
         else if (sit === 1) { x.escala = 'aguardando_aceite'; x.envio = { enviadaEm: agoraISO(-40), canal: 'whatsapp', versao: 1, entregueEm: agoraISO(-39) }; }
@@ -137,9 +160,24 @@ export function montarSeedAgenda(hoje, { agoraISO }) {
         else if (sit === 4 && k === 4) { x.prof = null; x.origem = null; x.escala = 'para_revisar'; x.recusa = { diaristaId: dias[(k + 1) % dias.length].id, nome: dias[(k + 1) % dias.length].nome, em: agoraISO(-90), canal: 'whatsapp', motivo: null }; }
         else x.escala = 'para_revisar';
       }
-      pedido(c, ['residencial', 'empresarial', 'residencial', 'residencial'][k % 4], [x]);
+      pedido(c, ['residencial', 'empresarial', 'residencial', 'residencial'][k % 4], [x], { cancelamento });
     }
   }
+  // ---------- começo do mês: o histórico deste mês ainda é curto; garante pelo menos 5 cancelamentos com motivo no mês
+  // (diárias dos próximos dias, canceladas com antecedência), pra o indicador de motivos nunca abrir vazio
+  const noMes = (d) => d.slice(0, 7) === hoje.slice(0, 7);
+  for (let j = 0; r.atendimentos.filter((a) => a.status === 'cancelado' && noMes(a.data)).length < 5 && j < 12; j++) {
+    const data = [somarDias(hoje, 2 + (j % 6)), somarDias(hoje, -1 - (j % 6))].find(noMes);
+    if (!data) break;
+    pedido(clientes[(j * 5 + 2) % CLI.length], 'residencial', [{ data, hora: HORAS[(j + 5) % HORAS.length], horas: 4, prof: (j + 4) % dias.length, origem: 'sugerida', pago: true, status: 'cancelado' }],
+      { cancelamento: MOTIVOS_CANCELAMENTO[(cancelados++) % MOTIVOS_CANCELAMENTO.length] });
+  }
+  // ---------- cadastros novos pelo site, ainda sem solicitação (hoje e ontem)
+  NOVOS_CADASTROS.forEach(([nome, bairro, cidade], i) => {
+    r.clientes.push({ id: id('c'), tipo: 'residencial', nome, parceria: false, telefone: `3199${String(4200000 + i * 3701).slice(0, 7)}`, email: `agenda.novo${i}@exemplo.com`,
+      endereco: { cep: cidade === 'Belo Horizonte' ? '30130010' : cidade === 'Contagem' ? '32310000' : '32600000', logradouro: 'Rua das Acácias', numero: String(100 + i * 37), complemento: '', bairro, cidade, uf: 'MG' },
+      origem: 'site', statusProspeccao: 'novo', criadoEm: agoraISO(-(90 + i * 420)) });
+  });
   // ---------- avaliações antigas (a nota de cada profissional nos selos)
   dias.forEach((d, i) => {
     const data = somarDias(hoje, -40 - i);
