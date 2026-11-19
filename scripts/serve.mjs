@@ -11,6 +11,7 @@ const TIPOS = {
   '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8',
   '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml', '.webp': 'image/webp', '.png': 'image/png',
   '.jpg': 'image/jpeg', '.pdf': 'application/pdf', '.mp4': 'video/mp4', '.json': 'application/json', '.ico': 'image/x-icon',
+  '.wasm': 'application/wasm', '.tflite': 'application/octet-stream', // foto de perfil (vendor/mediapipe-tasks-vision)
 };
 
 export function criarServidor() {

@@ -51,7 +51,8 @@ t.teste('simulador do mock marca "simulada", nunca "enviada"', () => {
 
 t.teste('contato manual: wa.me com texto codificado; sem WhatsApp configurado não gera link', () => {
   assert.equal(linkContatoManual(TESTE, 'Oi! Pedido & dúvida'), 'https://wa.me/5531900000000?text=Oi!%20Pedido%20%26%20d%C3%BAvida');
-  assert.equal(linkContatoManual(REAL, 'oi'), null);
+  assert.equal(linkContatoManual({ ...REAL, whatsapp: 'PREENCHER' }, 'oi'), null);
+  assert.equal(linkContatoManual(REAL, 'oi'), 'https://wa.me/5531972363590?text=oi'); // WhatsApp oficial (18/11/2026)
 });
 
 t.teste('verificador pega divergência entre WHATSAPP.md e o catálogo, categoria errada e marketing sem SAIR', () => {

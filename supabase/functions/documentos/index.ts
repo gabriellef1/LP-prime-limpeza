@@ -81,6 +81,8 @@ async function enviar(req: Request) {
   const tipo = String(form.get('tipo') || '');
   const nomeArquivo = String(form.get('nomeArquivo') || (arquivo instanceof File ? arquivo.name : '')).slice(0, 120);
   const chave = form.get('chave') ? String(form.get('chave')).slice(0, 200) : null;
+  // foto de perfil que o navegador não conseguiu recortar (fica a original com fundo desfocado): a equipe é avisada
+  const semRecorte = tipo === 'foto_perfil' && String(form.get('semRecorte') || '') === 'true';
   if (!(arquivo instanceof File)) throw invalido('Selecione um arquivo');
   if (!UUID.test(diaristaId)) throw new ErroDoc(400, 'DADOS_INVALIDOS', 'Id do cadastro inválido');
   if (!TIPOS.includes(tipo)) throw new ErroDoc(400, 'DADOS_INVALIDOS', 'Tipo de documento inválido');
@@ -95,7 +97,7 @@ async function enviar(req: Request) {
   let doc;
   try {
     doc = await rpc(comoEla, 'registrar_documento', {
-      p_dados: { diaristaId, tipo, nomeArquivo, storagePath: caminho, hashSha256: await sha256(bytes) }, p_chave: chave,
+      p_dados: { diaristaId, tipo, nomeArquivo, storagePath: caminho, hashSha256: await sha256(bytes), ...(semRecorte ? { semRecorte: true } : {}) }, p_chave: chave,
     });
   } catch (e) {
     // Só apaga se o registro NÃO ficou no banco: a resposta pode ter se perdido depois do commit (revisão do Codex).
@@ -158,6 +160,25 @@ async function abrir(req: Request, corpo: Record<string, unknown>) {
   return { documento: doc, url: data.signedUrl, validadeSegundos: validade };
 }
 
+/**
+ * Fotos de perfil das profissionais aprovadas, pra equipe ver na agenda e no Início. Só Prime (a RPC confere). O bucket
+ * segue privado: saem URLs assinadas de 5 minutos, que o painel baixa e guarda na memória da aba.
+ */
+async function fotos(req: Request) {
+  const { comoEla } = await usuario(req);
+  const { itens } = await rpc(comoEla, 'fotos_profissionais', {});
+  if (!itens.length) return { itens: [], validadeSegundos: VALIDADE_FOTOS };
+  const { data, error } = await admin.storage.from(BUCKET).createSignedUrls(itens.map((x: { path: string }) => x.path), VALIDADE_FOTOS);
+  if (error) { console.error('fotos', error.message); throw new ErroDoc(500, 'ERRO_INTERNO', 'Não foi possível carregar as fotos.'); }
+  const porCaminho = new Map((data || []).filter((x) => x.signedUrl && !x.error).map((x) => [x.path, x.signedUrl]));
+  return {
+    itens: itens.filter((x: { path: string }) => porCaminho.has(x.path))
+      .map((x: { diaristaId: string; path: string; semRecorte: boolean }) => ({ diaristaId: x.diaristaId, versao: x.path.slice(-40), url: porCaminho.get(x.path), semRecorte: x.semRecorte })),
+    validadeSegundos: VALIDADE_FOTOS,
+  };
+}
+const VALIDADE_FOTOS = 300;
+
 async function mesmoSegredo(a: string, b: string) {
   const enc = new TextEncoder();
   const [x, y] = await Promise.all([crypto.subtle.digest('SHA-256', enc.encode(a)), crypto.subtle.digest('SHA-256', enc.encode(b))]);
@@ -200,6 +221,7 @@ Deno.serve(async (req) => {
     try { corpo = JSON.parse(texto || '{}') ?? {}; } catch { corpo = {}; }
     if (corpo.acao === 'abrir') return resposta(200, await abrir(req, corpo));
     if (corpo.acao === 'abrir_foto_ocorrencia') return resposta(200, await abrirFotoOcorrencia(req, corpo));
+    if (corpo.acao === 'fotos') return resposta(200, await fotos(req));
     if (corpo.acao === 'retencao') return resposta(200, await retencao(req));
     throw new ErroDoc(400, 'DADOS_INVALIDOS', 'Ação desconhecida');
   } catch (e) {

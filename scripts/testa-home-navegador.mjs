@@ -24,8 +24,10 @@ const servidores = externa ? [] : [await subir(false), await subir(true)];
 const bases = externa ? [['preview', externa]] : [['github', servidores[0].base], ['raiz', servidores[1].base]];
 const b = await abrirNavegador();
 
-async function pagina(base, { largura = 1440, dev = false } = {}) {
+const PRIME_SEM_DADOS = "export const PRIME = { pix: { chave: 'PREENCHER', nomeRecebedor: 'PREENCHER', cidadeRecebedor: 'PREENCHER' }, whatsapp: 'PREENCHER', email: 'PREENCHER', endereco: 'PREENCHER' };";
+async function pagina(base, { largura = 1440, dev = false, semDados = false } = {}) {
   const ctx = await b.newContext({ viewport: { width: largura, height: 900 }, reducedMotion: 'reduce' });
+  if (semDados) await ctx.route('**/src/config/prime.js', (r) => r.fulfill({ body: PRIME_SEM_DADOS, contentType: 'text/javascript' }));
   const p = await ctx.newPage();
   p.erros = []; p.quebradas = [];
   p.on('console', (m) => m.type() === 'error' && p.erros.push(m.text()));
@@ -73,11 +75,15 @@ for (const [rotulo, base] of bases) {
 
   t.teste(`${rotulo}: FALAR COM A PRIME no header (desktop e celular), no hero e no CTA final; sem WhatsApp configurado, aviso claro`, async () => {
     for (const largura of [1440, 375]) {
-      const p = await pagina(base, { largura });
+      let p = await pagina(base, { largura });
       assert.ok(await p.locator('header [data-falar]').isVisible(), `${largura}px: header`);
       assert.equal(await p.locator('[data-falar]').count(), 3);
       if (!externa) {
-        // prime.js real (PREENCHER): leva aos contatos do rodapé e mostra o aviso
+        // prime.js real (18/11/2026): WhatsApp oficial da Prime
+        await p.waitForFunction(() => document.querySelector('header [data-falar]').href.startsWith('https://wa.me/5531972363590'));
+        await p.context().close();
+        // sem WhatsApp configurado (PREENCHER): leva aos contatos do rodapé e mostra o aviso
+        p = await pagina(base, { largura, semDados: true });
         await p.locator('header [data-falar]').click();
         await p.waitForSelector('#aviso-falar:not([hidden])');
         assert.match(await p.locator('#aviso-falar').textContent(), /WhatsApp oficial da Prime ainda não foi configurado/);

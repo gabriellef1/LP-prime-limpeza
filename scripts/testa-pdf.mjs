@@ -8,6 +8,7 @@ const t = criarSuite('P3 recibo em PDF');
 const texto = (bytes) => String.fromCharCode(...bytes);
 const R = { numero: 7, pagador: 'Joana (teste) Ávila', tipoDocumento: 'cpf', documento: '01234567890', valorCentavos: 17501, metodo: 'manual',
   confirmadoEm: '2026-10-02T13:00:00Z', pedidoId: 'abcdef12-0000-4000-8000-000000000000', referente: 'Diária de limpeza de 05/10/2026, das 08:00 às 12:00', situacao: 'confirmado' };
+import { EMPRESA } from '../src/config/seo.js';
 const EMP = { razaoSocial: 'PREENCHER', cnpj: 'PREENCHER', endereco: { rua: 'PREENCHER', bairro: 'PREENCHER', cidade: 'Belo Horizonte', uf: 'MG' } };
 
 t.teste('estrutura: cabeçalho, xref com os deslocamentos certos e startxref', () => {
@@ -33,6 +34,16 @@ t.teste('texto do recibo: número, valor com centavo ímpar, documento formatado
   assert.match(s, /a preencher/);
   assert.match(s, /n\\343o substitui a nota fiscal/);
   assert.doesNotMatch(s, /PREENCHER/);
+});
+
+t.teste('recibo com os dados reais da empresa (src/config/seo.js, 18/11/2026): razão social, CNPJ, endereço com CEP, e-mail e telefones', () => {
+  const s = texto(gerarPdf(linhasRecibo(R, EMPRESA)));
+  assert.match(s, /PRIME LIMPEZA ESPECIALIZADA LTDA/);
+  assert.match(s, /CNPJ: 49\.450\.793\/0001-30/);
+  assert.match(s, /Rua Para\\355ba, 550, Sala 800, Savassi, Belo Horizonte\/MG, CEP 30130-141/);
+  assert.match(s, /primelimpezaespecializada@gmail\.com/);
+  assert.match(s, /\\\(31\\\) 97236-3590/); assert.match(s, /\\\(31\\\) 99717-6829/);
+  assert.doesNotMatch(s, /a preencher|PREENCHER/);
 });
 
 t.teste('estornado avisa no recibo; caractere fora do Latin-1 não quebra o arquivo', () => {

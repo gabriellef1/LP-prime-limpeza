@@ -32,7 +32,9 @@ export function hashesInline(html) {
 export function montarHeaders({ ref, scripts, handlers, analytics = false }) {
   const supa = ref ? ` https://${ref}.supabase.co wss://${ref}.supabase.co` : '';
   // P7: script do Turnstile por último (a ordem dos hashes é a que o teste do B0 confere)
-  const scriptSrc = ["'self'", ...new Set(scripts), ...(handlers.length ? ["'unsafe-hashes'", ...new Set(handlers)] : []), 'https://challenges.cloudflare.com',
+  const scriptSrc = ["'self'", ...new Set(scripts), ...(handlers.length ? ["'unsafe-hashes'", ...new Set(handlers)] : []),
+    "'wasm-unsafe-eval'", // foto de perfil da profissional: o recorte do fundo roda em WebAssembly (vendor/mediapipe-tasks-vision); não libera eval de JS
+    'https://challenges.cloudflare.com',
     ...(analytics ? ['https://static.cloudflareinsights.com'] : [])].join(' '); // O1: Web Analytics só com o token
   const csp = [
     "default-src 'self'", `script-src ${scriptSrc}`, "style-src 'self' 'unsafe-inline'",

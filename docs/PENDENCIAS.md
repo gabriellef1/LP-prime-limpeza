@@ -6,16 +6,13 @@ Cada item abaixo já está implementado com o padrão indicado. Mudar é trocar 
 Resumo, em linguagem simples, do que está em aberto nas seções abaixo e depende da Prime. O documento da cliente é gerado só desta seção (`scripts/gera-pendencias-docx.mjs`). Em cada item, "Hoje" é como o sistema já funciona enquanto não houver resposta.
 
 ### Dados da empresa
-- **Dados da Prime:** razão social, CNPJ, endereço com CEP e e-mail. Aparecem no site, no recibo e nas páginas legais. Hoje: os campos ficam em branco e não são publicados.
-- **Pix e transferência:** chave Pix, nome do recebedor (até 25 letras), cidade e os dados bancários para transferência. Hoje: a tela de pagamento pede para falar com a Prime pelo WhatsApp.
-- **WhatsApp oficial:** o botão "Falar com a Prime" deve usar o (31) 97236-3590 do rodapé? Hoje: o botão leva aos contatos do rodapé.
-- **Encarregado de dados (LGPD):** nome e e-mail da pessoa que responde por privacidade. Hoje: em branco na Política de Privacidade.
+- **Transferência e depósito:** os dados bancários (banco, agência e conta) para quem paga por transferência. Hoje: o Pix já usa a chave CNPJ da Prime; para transferência a tela pede para falar com a Prime pelo WhatsApp.
 - **Endereço do site:** com ou sem "www"? Hoje: sem www.
 
 ### Lançamento do site novo
 - **Acessos do domínio e do e-mail:** login do registro.br (onde o domínio está registrado) e da Hostinger (onde estão o site antigo e o e-mail da Prime), ou alguém que possa entrar no dia da troca. Hoje: o domínio aponta pro site antigo.
 - **Conta do banco de dados:** em nome de quem fica a conta do Supabase (plano Pro, US$ 25 por mês) e qual cartão paga. Hoje: só existe o ambiente de testes, no plano grátis.
-- **WhatsApp oficial (Meta Business):** quem tem acesso ao Meta Business da Prime, pra liberar o envio automático das mensagens. Hoje: as mensagens automáticas ficam registradas, mas não são enviadas.
+- **WhatsApp oficial (Meta Business):** o número de disparo das mensagens automáticas é o (31) 97236-3590. Falta saber quem tem acesso ao Meta Business da Prime, pra liberar esse número para o envio automático. Hoje: as mensagens automáticas ficam registradas, mas não são enviadas.
 - **Planilhas atualizadas:** clientes e profissionais, no mesmo formato das já importadas. Hoje: a base de testes tem a cópia importada em setembro.
 
 ### Duração, locais e horários do agendamento
@@ -35,12 +32,11 @@ Resumo, em linguagem simples, do que está em aberto nas seções abaixo e depen
 - **Cancelamento de pacote com a 1ª metade paga:** a cliente recebe reembolso, fica com crédito ou outra regra? Hoje: o pacote inteiro é cancelado e o acerto é feito à mão.
 - **Cancelar só parte de um pacote:** deve ser possível? Com qual regra? Hoje: só cancela o pacote inteiro.
 - **Pacote com endereço novo:** a confirmação deve ficar travada até a Prime verificar o endereço? Hoje: o painel só avisa "verificar".
-- **Estorno:** prazo e forma de devolução, quando houver. Hoje: em branco nas Condições do atendimento.
 - **Hora extra:** limite de 4 horas por diária e pagamento em até 2 dias (14h). Está certo? Hoje: assim.
 
 ### Cobrança pelo Pix automático (entra logo depois do lançamento)
 - **Lançamento com a cobrança de hoje:** o site recebe as solicitações; a Prime aprova no painel, cobra como já faz hoje e marca o pagamento como recebido no painel. O Pix automático entra logo em seguida. Está de acordo? Hoje: quando a Prime aprova, o sistema já cria a cobrança, mas a mensagem de cobrança não sai sozinha.
-- **Conta de pagamento:** o Pix automático precisa de uma conta num serviço de pagamentos no CNPJ da Prime (o sistema já tem o lugar previsto para o Asaas). A Prime já tem conta? Quem paga as tarifas de cada cobrança? Hoje: nenhuma conta ligada.
+- **Conta de pagamento:** a conta no Asaas já foi criada pela Prime (informado em 18/11/2026). A ligação com o sistema entra depois do lançamento; a senha da conta fica só com a Prime (o sistema usa uma chave de acesso própria, criada na hora da ligação). Falta responder: quem paga as tarifas de cada cobrança? Hoje: nenhuma conta ligada.
 - **Quando a cobrança sai:** logo depois que a Prime aprova a solicitação? Hoje: é assim no sistema.
 - **Prazo para pagar:** continua até as 14h do dia útil anterior à diária? Hoje: é o que está nas Condições do atendimento.
 - **Pagamento fora do prazo:** a diária é cancelada sozinha ou a Prime decide caso a caso? Hoje: a Prime decide (a opção automática existe e está desligada).
@@ -90,12 +86,16 @@ Resumo, em linguagem simples, do que está em aberto nas seções abaixo e depen
 - **Senha esquecida:** a Prime redefine pelo painel. Está bom? Hoje: assim.
 
 ## Precisa da Gabrielle (fica fora do documento da cliente)
+- **Dados da empresa e foto da profissional (18/11/2026), falta aplicar no homolog:** a migration `20261118100000_dados_empresa_foto.sql` (versão 2026-11-18 dos textos legais, `documentos.sem_recorte`, `fotos_profissionais()`) e o deploy da function `documentos` (ação `fotos` e o aviso de foto sem recorte). Testado só no Supabase local. Sem a migration, o front desta branch pede aceite da versão 2026-11-18 e o homolog recusa: aplicar antes de publicar a main. Depois de aplicar, quem já tem conta aceita os textos de novo no próximo acesso.
+- **Migration do WIP dos indicadores:** `20261111100000_inicio_indicadores.sql` (branch `wip/inicio-indicadores-20261118`) tem carimbo ANTERIOR ao desta; se a de 18/11 for aplicada primeiro, recarimbar a dos indicadores.
+- **Foto da profissional, limites conhecidos:** a biblioteca de recorte (MediaPipe Tasks Vision, em `vendor/`) pesa 9,4 MB de WASM (cerca de 3 MB comprimido), baixada só quando a profissional escolhe a foto; roda na thread principal (alguns segundos em celular fraco); aparelho sem WebAssembly SIMD (iPhone com iOS anterior ao 16.4) cai no caminho "sem recorte". Testada no Chromium; falta testar em Android básico e iPhone de verdade.
+- **Segundo telefone do rodapé:** entrou o (31) 99717-6829 no lugar do (31) 99735-7372, conforme os telefones oficiais passados em 18/11. Confirmar com a cliente que o número antigo saiu mesmo.
 - **Contas de produção:** em nome de quem ficam Cloudflare, Supabase (plano pago) e GitHub (GO-LIVE, passo 1).
 - **SMTP próprio:** conta de envio com domínio verificado. Sem ela, confirmação de e-mail e "esqueci a senha" não saem.
 - **Entrar com Google:** OAuth client no Google Cloud.
 - **Turnstile e Web Analytics:** criar no painel da Cloudflare (precisa de login). Os cliques estão em `docs/GO-LIVE.md`, seção 8; depois, `node scripts/confere-config.mjs`.
 - **Auth do homolog sem o endereço raiz** (`prime-limpeza.pages.dev`): o "esqueci a senha" volta pro endereço errado ali (`testa-b2-preview` 7/8 contra a main em 27/10). Corrigido em `supabase/config.toml`; falta aplicar: `cd ~/projetos/LP-prime-limpeza && bash scripts/cli.sh supabase config push --project-ref dkafhwekgvwjttbsfxvu` (conferir o diff antes).
-- **Asaas (B4):** não existe integração nem conta sandbox configurada. Decidir Pix do Asaas ou Pix da chave, cartão à vista e 2x, taxas, segunda parcela e comprovante antes de construir (`docs/GO-LIVE.md`, seção 10).
+- **Asaas (B4):** a cliente criou a conta (informado em 18/11/2026). Integração só depois do lançamento. A senha da conta NÃO fica guardada em lugar nenhum (nem repo, nem `~/.prime-env`, nem conversa): na hora de integrar, a cliente gera a chave de API no painel do Asaas e ela entra como segredo do Supabase. Continua sem integração e sem sandbox configurado. Decidir Pix do Asaas ou Pix da chave, cartão à vista e 2x, taxas, segunda parcela e comprovante antes de construir (`docs/GO-LIVE.md`, seção 10).
 - **Desempenho do painel:** 84 a 88 no Lighthouse mobile (meta 90). A entrada do agendamento ficou em 80 (meta 85, pendência antiga). Decidir sobre bundler (ver "Acabamento" abaixo).
 - **Auditoria B1 a B6 e HSTS:** baixas, ver a seção da auditoria.
 - **Templates na Meta:** enviar para aprovação depois que a cliente aprovar os textos.
@@ -126,10 +126,10 @@ Nada aqui muda o que a cliente vê hoje. Ficou de fora porque é grande ou arris
 - **Seções antigas do painel** (`src/ui/paginas/painel-*.js`, cerca de 1720 linhas): reaproveitadas dentro das telas novas. Migrar uma a uma pros componentes do painel novo.
 - **Desempenho:** o painel fica em 84 a 88 e a entrada do agendamento em 80 no Lighthouse mobile. O gargalo é a cascata de módulos sem bundler e o `await` de topo da tabela de preços. Um bundler só no `monta-dist` resolve a primeira parte.
 
-## Dados da Prime (`src/config/prime.js`) — PREENCHER
-- [ ] Chave Pix, nome do recebedor (até 25 caracteres) e cidade (até 15). **Sem isso a tela de Pix mostra aviso e não gera cobrança.**
-- [ ] WhatsApp de atendimento (formato `5531...`). Sem isso os botões "abrir no WhatsApp" somem.
-- [ ] E-mail e endereço (opcionais).
+## Dados da Prime (`src/config/prime.js`): preenchidos em 18/11/2026 (cartão CNPJ de 10/11/2026)
+- [x] Chave Pix (CNPJ 49.450.793/0001-30), recebedor `PRIME LIMPEZA ESPECIALIZ` (24 de 25 caracteres) e cidade `BELO HORIZONTE` (14 de 15). QR e copia e cola de teste lidos e conferidos por `scripts/valida-pix.mjs`. **No banco** a chave real só entra na produção (`docs/PRODUCAO-PROVISORIA.md`); o homolog segue com o Pix fictício.
+- [x] WhatsApp de atendimento: (31) 97236-3590 (`5531972363590`). É também o número de disparo das mensagens automáticas.
+- [x] E-mail e endereço. Telefones oficiais no rodapé: (31) 99717-6829 e (31) 97236-3590 (o (31) 99735-7372 que estava no rodapé saiu).
 
 ## Preços (`src/config/precos.js`): TABELA OFICIAL da cliente (23/09/2026), já aplicada
 - [x] Diária por duração: 2h R$ 138 (só até 30 m²), 4h R$ 175, 6h R$ 203, 8h R$ 220; hora extra R$ 30.
@@ -166,7 +166,7 @@ Nada aqui muda o que a cliente vê hoje. Ficou de fora porque é grande ou arris
 
 ## Notificações (B5)
 - [ ] **E-mail como canal:** provedor pronto e desligado até existir remetente verificado (domínio próprio + Resend ou similar). As mensagens hoje são de WhatsApp; confirmar se a Prime quer e-mail também (e pra quais avisos).
-- [ ] **WhatsApp oficial (Meta Cloud API):** provedor pronto e testado contra servidor fake; em produção precisa do número verificado, token permanente e os templates aprovados (docs/WHATSAPP.md). Em homologação continua simulado.
+- [ ] **WhatsApp oficial (Meta Cloud API):** provedor pronto e testado contra servidor fake; em produção precisa do número verificado, token permanente e os templates aprovados (docs/WHATSAPP.md). Em homologação continua simulado. **Número de disparo: (31) 97236-3590** (informado pela cliente em 18/11/2026).
 
 ## Documentos das diaristas (B6)
 - [ ] **Retenção:** arquivos de cadastro reprovado apagados 90 dias depois da decisão (padrão nosso, `configuracao.documentos.retencaoReprovadasDias`). Confirmar prazo com a Prime (e se aprovadas desligadas também têm prazo).
@@ -200,11 +200,11 @@ Nada aqui muda o que a cliente vê hoje. Ficou de fora porque é grande ou arris
 - [ ] Entrada por código no WhatsApp: pronta atrás de `LOGIN_WHATSAPP` em `src/config/app.js`, desligada.
 
 ## Ajustes da cliente (24/09/2026): confirmar com a Isa
-- [ ] **WhatsApp oficial** pro botão "FALAR COM A PRIME" (`prime.js` está `PREENCHER`): é o (31) 97236-3590 do rodapé? Enquanto não preencher, o botão leva aos contatos do rodapé e mostra aviso.
+- [x] ~~WhatsApp oficial pro botão "FALAR COM A PRIME"~~: (31) 97236-3590, preenchido em 18/11/2026.
 - [ ] **Pacote mensal:** hoje cada diária é paga antecipada e integralmente (leitura literal do briefing). "Pacote pago de uma vez" está pronto e desligado (`pagamento.pacoteDeUmaVez` em `precos.js`). Confirmar.
 - [ ] **Desconto do mês na cobrança da última diária do mês:** confirmar se a Prime prefere na primeira. Se a cliente cancelar e o mês cair abaixo de 3 diárias, as cobranças pendentes são recalculadas; se a com desconto já foi paga, o acerto é manual.
-- [ ] **Dados bancários** pra transferência e depósito (hoje a tela manda pedir à Prime pelo WhatsApp) e **chave PIX** real.
-- [ ] **Prazo de estorno** e **política de remarcação** (não vieram; nada foi inventado: o painel só registra estorno e remarcação com motivo).
+- [ ] **Dados bancários** pra transferência e depósito (hoje a tela manda pedir à Prime pelo WhatsApp). A chave PIX real (CNPJ) entrou em 18/11/2026.
+- [ ] **Política de remarcação** (não veio; nada foi inventado: o painel só registra remarcação com motivo). O prazo de estorno veio em 18/11/2026: em até 24 horas (Condições do atendimento e Termos de Uso).
 - [ ] **Lembrete do prazo de pagamento:** às 9h do dia do vencimento (padrão nosso).
 - [ ] **FAQ:** aprovar as 9 respostas (escritas só com home-isa.txt e precos-prime.txt).
 - [ ] **Avaliações da home:** 3 a 4 depoimentos reais, com nome autorizado e tipo de serviço. Sem eles a seção fica oculta.
@@ -222,7 +222,7 @@ Nada aqui muda o que a cliente vê hoje. Ficou de fora porque é grande ou arris
 - [x] ~~E-mail pedido já era de cliente importada~~: a Gabrielle escolheu a variação `+prime` do mesmo Gmail (chega na mesma caixa; e-mail fora do repo). Conta criada com senha temporária (passada só no terminal) e troca obrigatória no primeiro acesso; login testado. A conta de demonstração antiga (`isa.admin@prime-homolog.example`) não existe mais.
 
 ### S1. SEO
-- [ ] **Domínio canônico com ou sem www** (hoje sem). **Dados da empresa** pro JSON-LD e pras páginas legais: razão social, CNPJ, e-mail, endereço com CEP (`src/config/seo.js`).
+- [ ] **Domínio canônico com ou sem www** (hoje sem). Os dados da empresa do JSON-LD e das páginas legais entraram em 18/11/2026 (`src/config/seo.js`).
 - [ ] **FAQ** continua pendente de aprovação (já estava): o FAQPage do JSON-LD reflete o FAQ que está na home.
 - [x] ~~Logo branco cortado~~: resolvido com o kit do logo (21/10/2026, `assets/marca/logo-branco.svg` tirado do material da cliente). Texto antigo: o logo branco (`assets/logo-branco.svg`) está com "LIMPEZA ESPECIALIZAD" (sem o A final) no próprio arquivo; o colorido (`logo.svg`) está certo. Pedir o branco corrigido e rodar `node scripts/gera-og.mjs` de novo.
 
@@ -231,7 +231,7 @@ Nada aqui muda o que a cliente vê hoje. Ficou de fora porque é grande ou arris
 - [ ] `/cliente/autocadastro` vai pra solicitação (a conta da cliente nasce nela). Confirmar.
 
 ### L1. Legal e LGPD
-- [ ] **Revisão por advogado** da Política de Privacidade e dos Termos de Uso (texto fiel ao sistema, mas sem revisão jurídica). Campos `PREENCHER`: razão social, CNPJ, endereço, **encarregado (nome e e-mail)**, política de cancelamento e estorno.
+- [ ] **Revisão por advogado** da Política de Privacidade, dos Termos de Uso e das Condições do atendimento (texto fiel ao sistema, mas sem revisão jurídica). Os campos `PREENCHER` foram preenchidos em 18/11/2026 (versão 2026-11-18). Das Condições saiu o item "demais condições gerais e responsabilidades, após revisão jurídica", que era só um lembrete em branco: se o advogado quiser uma seção de condições gerais, ela entra numa versão nova.
 - [ ] **Prazos de guarda:** pedidos e pagamentos 5 anos (fiscal); documento (CPF/CNPJ) mantido na exclusão pra ligar o pagamento ao pagador; registros de acesso "pelo menos 6 meses" (hoje não há rotina que apague acessos antigos). Confirmar com o advogado.
 - [ ] **Exclusão de profissional:** pelo site só a cliente pede ("Excluir meus dados" em Minha conta). A profissional pede à Prime, que hoje faz manualmente.
 - [ ] Profissionais já aprovadas antes do aceite versionado (hoje só fictícias) passam a ver o pedido de aceite na agenda.
@@ -266,7 +266,7 @@ Base: spec-agendamento-v2.txt, autoagendamento-isa.txt (31 itens) e decisões da
 - [ ] **P2, região em BH:** o cadastro da profissional usa regionais de BH ("BH - Pampulha"...), mas o pedido só tem bairro e cidade. Hoje qualquer regional cobre qualquer bairro de BH. Pra sugerir pela regional, precisamos da lista bairro -> regional (a PBH publica) ou que a cliente diga se isso importa.
 - [ ] **P2, turnos:** manhã = diária que termina até 13:00; tarde = começa a partir de 12:00. Confirmar.
 - [ ] **P3, nota fiscal:** o recibo NÃO é nota fiscal. A emissão de NF é assunto da cliente (contador/prefeitura).
-- [ ] **P3, dados da empresa no recibo:** razão social, CNPJ e endereço estão "a preencher" (`src/config/seo.js`).
+- [x] ~~P3, dados da empresa no recibo~~: razão social, CNPJ, endereço com CEP, e-mail e telefones entraram em 18/11/2026.
 - [ ] **P3, hora extra:** prazo de pagamento da cobrança de hora extra (hoje 2 dias, 14h) e limite de 4 horas por diária. Confirmar.
 - [ ] **P3, liberar vaga sozinho:** a opção existe e está DESLIGADA. Ligar só se a Prime quiser que diária não paga no prazo seja cancelada sem ninguém decidir.
 - [ ] **P3, recibo e exclusão de dados (LGPD):** o recibo guarda nome e documento de quem pagou mesmo depois da exclusão (obrigação fiscal). Advogado confirmar.

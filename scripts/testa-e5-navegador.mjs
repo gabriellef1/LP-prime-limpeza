@@ -62,6 +62,11 @@ t.teste('passo 4: conteúdo que não confere e arquivo > 5 MB são recusados; se
     await p.waitForSelector(`[data-doc=${tipo}][data-estado=ok]`);
   }
   assert.equal(await p.locator('[data-doc=foto_perfil] .previa img').count(), 1, 'prévia da imagem');
+  // foto de perfil: o que fica guardado é a versão final do navegador (JPEG 512x512), não o arquivo escolhido. A foto
+  // fictícia do teste não tem rosto: cai no caminho sem recorte (original com fundo desfocado) e avisa a pessoa.
+  assert.match(await p.locator('[data-doc=foto_perfil] .info strong').textContent(), /^foto-perfil-sem-recorte\.jpg$/);
+  assert.match(await p.locator('#doc-foto_perfil-aviso').textContent(), /Não deu pra trocar o fundo desta foto/);
+  assert.deepEqual(await p.evaluate(async () => { const i = document.querySelector('[data-doc=foto_perfil] .previa img'); await i.decode(); return [i.naturalWidth, i.naturalHeight]; }), [512, 512]);
   for (const tipo of ['comprovante_residencia', 'antecedentes']) {
     await p.locator(`#doc-${tipo}`).setInputFiles('scripts/fixtures/documento-ficticio.pdf');
     await p.waitForSelector(`[data-doc=${tipo}][data-estado=ok]`);

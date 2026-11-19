@@ -28,6 +28,7 @@ function empresa() {
   const o = {
     '@type': ['LocalBusiness', 'HouseCleaningService'], '@id': `${DOMINIO}/#empresa`, name: e.nome, url: `${DOMINIO}/`,
     logo: abs('assets/logo.svg'), image: abs(IMAGEM_OG.caminho), telephone: e.telefone, address: end, areaServed: cidades,
+    ...(e.telefone2 ? { contactPoint: [e.telefone, e.telefone2].map((t) => ({ '@type': 'ContactPoint', telephone: t, contactType: 'customer service', areaServed: 'BR', availableLanguage: 'Portuguese' })) } : {}),
     sameAs: [e.instagram], priceRange: '$$',
     openingHoursSpecification: e.horario.map((h) => ({ '@type': 'OpeningHoursSpecification', dayOfWeek: h.dias, opens: h.abre, closes: h.fecha })),
   };

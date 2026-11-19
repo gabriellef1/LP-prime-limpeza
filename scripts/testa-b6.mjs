@@ -16,7 +16,7 @@ const URL_DOC = `${ENV.SUPABASE_URL}/functions/v1/documentos`;
 const BUCKET = 'documentos-diaristas';
 const PRIME = { sessao: { ator: 'prime' } };
 await limparFicticios();
-const { api, porDiaristaId, porEmail } = await montarApiDeTeste('b6');
+const { api, prime, porDiaristaId, porEmail } = await montarApiDeTeste('b6');
 
 const idA = await criarDiaristaPendente(api);
 const idB = await criarDiaristaPendente(api);
@@ -138,6 +138,34 @@ t.teste('repetir o mesmo arquivo com a mesma chave devolve o mesmo documento e n
   assert.equal(b.json.id, a.json.id);
   const [{ n }] = await sql(`select count(*)::int n from storage.objects where bucket_id = $1 and name like $2`, [BUCKET, `%/${idR}/foto_perfil-%`]);
   assert.equal(n, 1, 'o arquivo da repetição saiu do bucket');
+});
+
+// Foto de perfil com fundo padrão (18/11/2026): precisa da migration 20261118100000 e da function `documentos` nova.
+// Enquanto não forem aplicadas neste banco o teste é pulado (o front funciona sem elas: ficam as iniciais).
+const [{ n: temSemRecorte }] = await sql(`select count(*)::int n from information_schema.columns where table_schema = 'public' and table_name = 'documentos' and column_name = 'sem_recorte'`);
+if (!temSemRecorte) console.log('  pulado neste banco: foto de perfil sem recorte e fotos das profissionais (migration 20261118100000 não aplicada)');
+else t.teste('foto de perfil: "sem recorte" fica gravado e aparece pra Prime; fotos das aprovadas só pra Prime, por URL assinada', async () => {
+  const jpg = ARQUIVOS.jpg?.bytes || ARQUIVOS.png.bytes; const mime = ARQUIVOS.jpg ? 'image/jpeg' : 'image/png'; const nome = ARQUIVOS.jpg ? 'foto-perfil-sem-recorte.jpg' : 'foto-perfil-sem-recorte.png';
+  const d1 = await api.salvarDocumento({ diaristaId: idR, tipo: 'foto_perfil', nomeArquivo: nome, mime, tamanho: jpg.length, conteudo: jpg, semRecorte: true }, { sessao: { ator: 'diarista', id: idR }, chave: chave('foto-sr') });
+  assert.equal(d1.semRecorte, true);
+  const d2 = await api.salvarDocumento({ diaristaId: idR, tipo: 'foto_perfil', nomeArquivo: 'foto-perfil.png', mime: 'image/png', tamanho: ARQUIVOS.png.bytes.length, conteudo: ARQUIVOS.png.bytes }, { sessao: { ator: 'diarista', id: idR }, chave: chave('foto-ok') });
+  assert.equal(d2.semRecorte, false, 'a troca por uma foto recortada limpa o aviso');
+  // outro tipo de documento não aceita o aviso (nem ganha o campo)
+  const f = form(idR, 'cpf', ARQUIVOS.pdf.bytes, 'application/pdf', 'cpf.pdf'); f.append('semRecorte', 'true');
+  const outro = await chamar(sR, f);
+  assert.equal(outro.status, 200, JSON.stringify(outro.json)); assert.equal('semRecorte' in outro.json, false);
+  // fotos: só Prime; só de profissional aprovada; URL assinada que abre
+  for (const [quem, sb] of [['diarista', sA], ['cliente', cliente]]) assert.notEqual((await chamar(sb, { acao: 'fotos' })).status, 200, `${quem} não lista fotos`);
+  assert.equal((await chamar(null, { acao: 'fotos' })).status, 401);
+  const antes = await chamar(prime, { acao: 'fotos' });
+  assert.equal(antes.status, 200, JSON.stringify(antes.json));
+  assert.ok(!antes.json.itens.some((x) => [idA, idR].includes(x.diaristaId)), 'pendente e rascunho ficam de fora');
+  await api.aprovarDiarista(idA, {}, { ...PRIME, chave: chave('apr-foto') });
+  const depois = await chamar(prime, { acao: 'fotos' });
+  const fa = depois.json.itens.find((x) => x.diaristaId === idA);
+  assert.ok(fa && /^https?:\/\//.test(fa.url) && fa.semRecorte === false, JSON.stringify(depois.json).slice(0, 300));
+  const img = await fetch(fa.url.replace(/^http:\/\/kong:8000/, ENV.SUPABASE_URL));
+  assert.equal(img.status, 200); assert.match(img.headers.get('content-type') || '', /^image\//);
 });
 
 // Lento: o gateway só recusa depois de ~150 s. Roda no --completo do roda-testes (TESTES_COMPLETOS=1) ou rodando este script direto.

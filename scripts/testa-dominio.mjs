@@ -154,11 +154,18 @@ t.teste('config completa (teste) libera tudo', () => {
   const c = validarConfiguracao(TESTE);
   assert.ok(c.pix.ok && c.whatsapp.ok && c.email.ok);
 });
-t.teste('config real com PREENCHER bloqueia Pix e WhatsApp', () => {
-  const c = validarConfiguracao(REAL);
+t.teste('config real (dados da Prime de 18/11/2026) libera Pix, WhatsApp e e-mail; dentro do limite do padrão Pix', () => {
+  const r = validarConfiguracao(REAL);
+  assert.ok(r.pix.ok && r.whatsapp.ok && r.email.ok);
+  assert.match(REAL.pix.chave, /^\d{14}$/); assert.ok(REAL.pix.nomeRecebedor.length <= 25 && REAL.pix.cidadeRecebedor.length <= 15);
+  assert.match(linkWhatsApp(REAL, 'oi'), /^https:\/\/wa\.me\/5531972363590\?text=oi$/);
+});
+t.teste('config com PREENCHER bloqueia Pix e WhatsApp', () => {
+  const SEM = { pix: { chave: 'PREENCHER', nomeRecebedor: 'PREENCHER', cidadeRecebedor: 'PREENCHER' }, whatsapp: 'PREENCHER', email: 'PREENCHER', endereco: 'PREENCHER' };
+  const c = validarConfiguracao(SEM);
   assert.equal(c.pix.ok, false); assert.deepEqual(c.pix.faltando, ['pix.chave', 'pix.nomeRecebedor', 'pix.cidadeRecebedor']);
   assert.equal(c.whatsapp.ok, false);
-  assert.equal(linkWhatsApp(REAL, 'oi'), null);
+  assert.equal(linkWhatsApp(SEM, 'oi'), null);
 });
 t.teste('config incompleta por funcionalidade: sem e-mail não bloqueia Pix; sem cidade bloqueia só Pix', () => {
   const semEmail = validarConfiguracao({ ...TESTE, email: '' });

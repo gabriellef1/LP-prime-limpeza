@@ -81,6 +81,15 @@ function erroCampos(erros) {
   if (Object.keys(erros).length) throw new ErroNegocio('DADOS_INVALIDOS', Object.values(erros)[0], erros);
 }
 
+/** Conteúdo de imagem (Blob, File ou bytes) como data URL, pra foto da profissional no mock. null se não der pra ler. */
+async function dataUrlDe(conteudo, mime) {
+  try {
+    const b = conteudo instanceof Uint8Array ? conteudo : new Uint8Array(await conteudo.arrayBuffer());
+    let s = ''; for (let i = 0; i < b.length; i += 0x8000) s += String.fromCharCode(...b.subarray(i, i + 0x8000));
+    return `data:${mime};base64,${btoa(s)}`;
+  } catch { return null; }
+}
+
 async function lerCabecalho(conteudo) {
   if (!conteudo) return null;
   if (conteudo instanceof Uint8Array) return conteudo.slice(0, 8);
@@ -843,8 +852,11 @@ export function criarCasosDeUso({ repo: repoBase, relogio, gerarId, bytesAleator
       }));
     },
 
-    async salvarDocumento({ diaristaId, tipo, nomeArquivo, mime, tamanho, conteudo } = {}, { sessao, chave } = {}) {
+    async salvarDocumento({ diaristaId, tipo, nomeArquivo, mime, tamanho, conteudo, semRecorte } = {}, { sessao, chave } = {}) {
       const cabecalho = await lerCabecalho(conteudo);
+      // foto de perfil (já com o fundo padrão, feita no navegador): vira o campo `foto` da profissional. Lida ANTES da
+      // transação (ler o arquivo dentro dela fecharia a transação do IndexedDB).
+      const foto = tipo === 'foto_perfil' && /^image\/(jpeg|png)$/.test(mime || '') ? await dataUrlDe(conteudo, mime) : null;
       if (!TIPOS_DOC.includes(tipo)) throw new ErroNegocio('DADOS_INVALIDOS', 'Tipo de documento inválido');
       if (!/^[0-9a-f-]{36}$/i.test(diaristaId || '')) throw new ErroNegocio('DADOS_INVALIDOS', 'Id do cadastro inválido');
       // Tamanho REAL do conteúdo (o informado pelo navegador não vale): GPT#5.
@@ -859,8 +871,10 @@ export function criarCasosDeUso({ repo: repoBase, relogio, gerarId, bytesAleator
         for (const d of await tx.por('documentos', 'diaristaId', diaristaId)) {
           if (d.tipo === tipo) { await tx.del('documentos', d.id); await tx.del('arquivos', d.blobRef); }
         }
-        const doc = { id: gerarId(), diaristaId, tipo, nomeArquivo: String(nomeArquivo).slice(0, 120), mime, tamanho, blobRef: gerarId(), criadoEm: agoraISO() };
-        await tx.put('arquivos', { id: doc.blobRef, conteudo });
+        const doc = { id: gerarId(), diaristaId, tipo, nomeArquivo: String(nomeArquivo).slice(0, 120), mime, tamanho, blobRef: gerarId(), criadoEm: agoraISO(),
+          ...(tipo === 'foto_perfil' ? { semRecorte: semRecorte === true } : {}) };
+        if (existe && tipo === 'foto_perfil') await tx.put('diaristas', { ...existe, foto, fotoSemRecorte: semRecorte === true }); // troca feita pela Prime
+        await tx.put('arquivos', { id: doc.blobRef, conteudo, ...(foto ? { foto } : {}) });
         await tx.put('documentos', doc);
         return doc;
       }));
@@ -906,7 +920,9 @@ export function criarCasosDeUso({ repo: repoBase, relogio, gerarId, bytesAleator
         const docs = await tx.por('documentos', 'diaristaId', d.id);
         const faltando = documentosFaltando(docs.map((x) => x.tipo), dados.identidade);
         if (faltando.length) throw new ErroNegocio('DADOS_INVALIDOS', 'Faltam documentos obrigatórios', { documentos: faltando });
-        const diarista = { ...d, identidade: dados.identidade, documentos: docs.map((x) => x.id), status: 'pendente', criadoEm: agoraISO(), aceiteTermosEm: agoraISO() };
+        const fotoPerfil = docs.find((x) => x.tipo === 'foto_perfil');
+        const diarista = { ...d, identidade: dados.identidade, documentos: docs.map((x) => x.id), status: 'pendente', criadoEm: agoraISO(), aceiteTermosEm: agoraISO(),
+          foto: (fotoPerfil && (await tx.get('arquivos', fotoPerfil.blobRef))?.foto) || null, fotoSemRecorte: fotoPerfil?.semRecorte === true };
         await tx.put('diaristas', diarista);
         await evento(tx, 'diarista_cadastrada', { diaristaId: d.id });
         return diarista;

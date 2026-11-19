@@ -10,8 +10,10 @@ import { fileURLToPath } from 'node:url';
 import { chavePublica, lerPrimeEnv } from './gera-ambiente.mjs';
 
 const RAIZ = fileURLToPath(new URL('..', import.meta.url));
-const BINARIO = /\.(png|jpe?g|webp|gif|ico|pdf|mp4|woff2?|ttf|zip)$/i;
-const IGNORA = [/^package-lock\.json$/, /(^|\/)node_modules\//];
+const BINARIO = /\.(png|jpe?g|webp|gif|ico|pdf|mp4|woff2?|ttf|zip|wasm|tflite)$/i;
+// O carregador do WASM do MediaPipe (vendorizado, versão fixa) traz tabelas em base64 que parecem segredo: é o arquivo do
+// pacote npm sem alteração, com o SHA-256 anotado em vendor/mediapipe-tasks-vision@0.10.14/ORIGEM.md.
+const IGNORA = [/^package-lock\.json$/, /(^|\/)node_modules\//, /^(dist\/)?vendor\/mediapipe-tasks-vision@0\.10\.14\/wasm\/vision_wasm_internal\.js$/];
 // Arquivos que CITAM o nome do papel pra detectá-lo. Só a menção é liberada neles; os outros padrões valem.
 const CITAM = new Set(['scripts/varre-segredos.mjs', 'scripts/gera-ambiente.mjs']);
 
@@ -51,6 +53,9 @@ export async function dadosReais(caminho = `${homedir()}/.prime-dados/clientes-c
   // Contatos PÚBLICOS da própria Prime (rodapé da home) não são dado de cliente, mesmo que alguém tenha usado na base.
   const home = readFileSync(join(RAIZ, 'index.html'), 'utf8');
   for (const tel of home.match(/\(\d{2}\)\s?\d{4,5}-\d{4}/g) || []) t.delete(tel.replace(/\D/g, ''));
+  // Idem os dados PÚBLICOS da empresa (cartão CNPJ, publicados no rodapé, nas páginas legais e no recibo): CNPJ e e-mail da Prime.
+  const { EMPRESA } = await import('../src/config/seo.js');
+  t.delete(String(EMPRESA.cnpj || '').replace(/\D/g, '')); t.delete(String(EMPRESA.email || '').toLowerCase());
   return t;
 }
 

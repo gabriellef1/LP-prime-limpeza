@@ -108,7 +108,9 @@ t.teste('B3 Início: o que precisa da equipe primeiro (solicitações novas e Pr
   assert.ok(titulos.includes('Meta de diárias') && !titulos.includes('Motivos de cancelamento') && !titulos.includes('Regiões mais atendidas'));
   assert.match(await p.locator('h1').innerText(), /^(Bom dia|Boa tarde|Boa noite), Equipe!$/);
   const l = linhas(p).first();
-  assert.match(await l.innerText(), /Ana Teste Fictícia[\s\S]*Savassi - BH[\s\S]*Residencial[\s\S]*R\$ 203,00/);
+  // R$ 203,00 em dia comum; R$ 223,00 quando a data do seed (relativa a hoje) cai em sábado ou feriado (taxa de R$ 20,00):
+  // em 18/11/2026 ela cai em 20/11 (feriado) e o teste falhava por causa da data, não da tela
+  assert.match(await l.innerText(), /Ana Teste Fictícia[\s\S]*Savassi - BH[\s\S]*Residencial[\s\S]*R\$ 2[02]3,00/);
   await l.getByRole('button', { name: /^Ver detalhes de/ }).click();
   await p.waitForFunction(() => /Nº da solicitação|Modalidade|Datas/.test(document.querySelector('[data-bloco=inicio-solicitacoes] tr.p-det')?.textContent || ''));
   assert.match(await p.locator('[data-bloco=inicio-solicitacoes] tr.p-det').innerText(), /Datas[\s\S]*Endereço/);

@@ -39,4 +39,21 @@ t.teste('falha de validação na composição não deixa cliente órfão', async
   assert.equal(amb.repo.contar('clientes'), antes);
 });
 
+t.teste('foto de perfil vira o campo foto da profissional (mock); "sem recorte" fica no documento e no cadastro', async () => {
+  const { criarDiaristaPendente, chave } = await import('./cenarios.mjs');
+  const { ARQUIVOS } = await import('./fixtures/arquivos.mjs');
+  const PRIME = { sessao: { ator: 'prime' } };
+  const id = await criarDiaristaPendente(amb.casos);
+  const a = await amb.casos.obterDiarista(id, PRIME);
+  assert.match(a.diarista.foto, /^data:image\/png;base64,/);
+  assert.equal(a.diarista.fotoSemRecorte, false);
+  assert.equal(a.documentos.find((d) => d.tipo === 'foto_perfil').semRecorte, false);
+  assert.equal('semRecorte' in a.documentos.find((d) => d.tipo === 'cnh_frente'), false);
+  // a Prime troca a foto por uma que o navegador não conseguiu recortar: o aviso acompanha
+  const doc = await amb.casos.salvarDocumento({ diaristaId: id, tipo: 'foto_perfil', nomeArquivo: 'foto-perfil-sem-recorte.png', mime: ARQUIVOS.png.mime, tamanho: ARQUIVOS.png.bytes.length, conteudo: ARQUIVOS.png.bytes, semRecorte: true }, { ...PRIME, chave: chave('foto-sr') });
+  assert.equal(doc.semRecorte, true); assert.equal('foto' in doc, false, 'a imagem não vai junto dos metadados do documento');
+  const b = await amb.casos.obterDiarista(id, PRIME);
+  assert.equal(b.diarista.fotoSemRecorte, true); assert.match(b.diarista.foto, /^data:image\/png;base64,/);
+});
+
 await t.fim();
