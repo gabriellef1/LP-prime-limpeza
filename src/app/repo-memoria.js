@@ -13,6 +13,7 @@ export function criarRepoMemoria() {
       get: async (s, id) => clonar(loja(s).get(id)),
       put: async (s, obj) => { const k = obj[STORES[s].chave]; if (!k) throw new Error(`sem chave em ${s}`); loja(s).set(k, clonar(obj)); return obj; },
       del: async (s, id) => { loja(s).delete(id); },
+      limpar: async (s) => { loja(s).clear(); },
       todos: async (s) => [...loja(s).values()].map(clonar),
       por: async (s, indice, valor) => [...loja(s).values()].filter((o) => o[indice] === valor).map(clonar),
     };
